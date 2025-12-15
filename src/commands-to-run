@@ -1,0 +1,4 @@
+2-javacc src/parser/JavaParser.jj
+4-javac src/parser/*.java src/Main.java
+java -cp src Main input/valid.java -->valid input
+java -cp src Main input/invalid.java -->invalid input

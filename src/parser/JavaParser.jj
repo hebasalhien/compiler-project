@@ -1,0 +1,703 @@
+options {
+    STATIC = false;
+    IGNORE_CASE = false;
+
+}
+PARSER_BEGIN(JavaParser)
+package parser;
+import parser.SymbolTable;import java.util.*;
+
+public class JavaParser {
+    // Use external parser.SymbolTable class
+    private SymbolTable symbolTable = new SymbolTable();
+
+    // Statistics for Phase 2
+    private int classCount = 0;
+    private int methodCount = 0;
+    private int fieldCount = 0;
+    private int statementCount = 0;
+    private int expressionCount = 0;
+
+    // Helper method to get clean token name
+    private String getTokenName(Token token) {
+        String name = tokenImage[token.kind];
+            if (name.equals("\"<\"") || name.equals("\">\"") || name.equals("\"<=\"") || name.equals("\">=\"")) {
+                return "Operator";  // Keep the operator as is (without any cleaning)
+            }
+        name = name.replace("\"", "").replace("<","").replace(">","");
+
+        // Map to token type names
+    switch (name) {
+            case "class":
+            case "public":
+            case "private":
+            case"protected":
+            case"final":
+            case"const":
+            case "static":
+            case "void":
+            case "int":
+            case "double":
+            case "float":
+            case "long":
+            case "short":
+            case "byte":
+            case "char":
+            case "boolean":
+            case "if":
+            case "else":
+            case "while":
+            case "do":
+            case "for":
+            case "return":
+            case "break":
+            case "continue":
+            case "true":
+            case "false":
+                return "Keyword";
+
+            case "=":
+            case "+":
+            case "-":
+            case "*":
+            case "/":
+            case "%":
+            case "==":
+            case "!=":
+            case "<":
+            case ">":
+            case "<=":
+            case ">=":
+            case "&&":
+            case "||":
+            case "!":
+                return "Operator";
+
+            case "(":
+            case ")":
+            case "{":
+            case "}":
+            case "[":
+            case "]":
+            case ";":
+            case ",":
+            case ".":
+                return "Delimiters";
+
+            default:
+                return name;
+        }
+    }
+
+    private void recordToken(Token t) {
+        symbolTable.addToken(t, getTokenName(t));
+    }
+
+    public void printSymbolTable() {
+        symbolTable.printSymbolTable();
+    }
+
+    public void printVariables() {
+        symbolTable.printVariables();
+    }
+
+    public void printStatistics() {
+        System.out.println("\n========================================");
+        System.out.println("PARSING STATISTICS");
+        System.out.println("========================================");
+        System.out.println("Classes found:      " + classCount);
+        System.out.println("Methods found:      " + methodCount);
+        System.out.println("Fields found:       " + fieldCount);
+        System.out.println("Statements found:   " + statementCount);
+        System.out.println("Expressions found:  " + expressionCount);
+    }
+
+    public List<String> getUnusedVariables() {
+        return symbolTable.getUnusedVariables();
+        }
+
+}
+
+PARSER_END(JavaParser)
+
+
+
+SKIP : {
+  " " | "\t" | "\n" | "\r" | "\f"
+}
+
+SKIP : {
+  <SINGLE_LINE_COMMENT: "//" (~["\n","\r"])* ("\n"|"\r"|"\r\n")?>
+| <MULTI_LINE_COMMENT: "/*" (~["*"])* "*" ("*" | (~["*","/"] (~["*"])* "*"))* "/">
+}
+
+TOKEN : {
+//KEYWORD
+ <CLASS:"class">
+|<PUBLIC:"public">
+|<PRIVATE:"private">
+|<PROTECTED:"protected">
+|<FINAL:"final">
+|<ABSTRACT:"abstract">
+|<CONST:"const">
+|<STATIC:"static">
+|<VOID:"void">
+|<INT:"int">
+|<LONG:"long">
+|<SHORT:"short">
+|<BYTE:"byte">
+|<FLOAT:"float">
+|<DOUBLE:"double">
+|<STRING:"String">
+|<CHAR:"char">
+|<BOOLEAN:"boolean">
+|<IF:"if">
+|<ELSE:"else">
+|<WHILE:"while">
+|<DO:"do">
+|<FOR:"for">
+|<RETURN:"return">
+|<TRUE:"true">
+|<FALSE:"false">
+|<NEW:"new">
+|<THIS:"this">
+|<BREAK:"break">
+|<CONTINUE:"continue">
+|<SWITCH: "switch">
+|<CASE:"case">
+|<DEFAULt:"default">
+}
+TOKEN : {
+//OPERATORS
+ <ASSIGN:"=">
+|<PLUS:"+">
+|<MINUS:"-">
+|<DIVIDE:"/">
+|<MULTIPLY:"*">
+|<MODULO:"%">
+|<EQ:"==">
+|<NE:"!=">
+|<LT:"<">
+|<LE:"<=">
+|<GT:">">
+|<GE:">=">
+|<AND:"&&">
+|<OR:"||">
+|<NOT:"!">
+|<INCREMENT:"++">
+|<DECREMENT:"--">
+}
+
+TOKEN : {
+//DELIMITERS
+  <LPAREN: "(">
+| <RPAREN: ")">
+| <LBRACE: "{">
+| <RBRACE: "}">
+| <LBRACKET: "[">
+| <RBRACKET: "]">
+| <SEMICOLON: ";">
+| <COMMA: ",">
+| <DOT: ".">
+| <COLON:":">
+}
+
+TOKEN : {
+//LITERAL
+  <INTEGER_LITERAL: (["0"-"9"])+>
+| <LONG_LITERAL: (["0"-"9"])+ ("l"|"L")>
+| <FLOAT_LITERAL: (["0"-"9"])+ "." (["0"-"9"])+ ("f"|"F")
+                | (["0"-"9"])+ ("f"|"F")>
+| <DOUBLE_LITERAL: (["0"-"9"])+ "." (["0"-"9"])+
+                 | (["0"-"9"])+ "." (["0"-"9"])+ ("d"|"D")>
+| <STRING_LITERAL: "\"" (~["\"","\\"] | "\\" ~[])* "\"">
+| <CHAR_LITERAL: "'" (~["'","\\"] | "\\" ~[]) "'">
+| <BOOLEAN_LITERAL: "true" | "false">
+| <NULL_LITERAL: "null">
+}
+
+TOKEN : {
+
+  <IDENTIFIER: ["a"-"z","A"-"Z","_"] (["a"-"z","A"-"Z","0"-"9","_"])*>
+}
+
+///=====================phase2:parsing====================///
+
+void Program():{}
+{
+ClassDeclaration()
+<EOF>
+{System.out.println("-> Program Structure validate.");}
+}
+
+void ClassDeclaration():{
+        Token tCLASS,className,tRBRACE,tLBRACE;
+        String modifiers = "";}
+{
+ [ modifiers = Modifiers() ]
+ tCLASS=<CLASS> className =<IDENTIFIER>
+    {
+recordToken(tCLASS);
+recordToken(className);
+classCount++;
+ if (!modifiers.isEmpty()) {
+            System.out.println("→ Found class: " + modifiers + " " + className.image);
+        } else {
+            System.out.println("→ Found class: " + className.image);
+        } }
+tLBRACE=<LBRACE>{recordToken(tLBRACE);}
+(MemberDeclaration())*
+tRBRACE=<RBRACE>{recordToken(tRBRACE);}
+}
+
+void MemberDeclaration() : {}
+{
+    LOOKAHEAD(Modifiers() Type() [<LBRACKET> <RBRACKET>] <IDENTIFIER> <SEMICOLON>)
+    FieldDeclaration()
+|   LOOKAHEAD(Modifiers() Type() [<LBRACKET> <RBRACKET>] <IDENTIFIER> <LPAREN>)
+    MethodDeclaration()
+|   LOOKAHEAD(Modifiers() <VOID> <IDENTIFIER> <LPAREN>)
+    MethodDeclaration()
+|   LOOKAHEAD(Type() [<LBRACKET> <RBRACKET>] <IDENTIFIER> <SEMICOLON>)
+    FieldDeclaration()
+|   LOOKAHEAD(Type() [<LBRACKET> <RBRACKET>] <IDENTIFIER> <LPAREN>)
+    MethodDeclaration()
+|   LOOKAHEAD(<VOID> <IDENTIFIER> <LPAREN>)
+    MethodDeclaration()
+}
+
+void FieldDeclaration():{
+        Token type,id,tSEMICOLON,tLBRACKET,tRBRACKET;
+        String modifiers = "";
+}
+        {
+         [ modifiers = Modifiers() ]
+        type= Type()
+         [ tLBRACKET=<LBRACKET>{recordToken(tLBRACKET);} tRBRACKET=<RBRACKET>{recordToken(tRBRACKET);} ]  // Optional array brackets
+         id = <IDENTIFIER>  tSEMICOLON=<SEMICOLON>
+        {
+fieldCount++;
+recordToken(type);
+recordToken(id);
+recordToken(tSEMICOLON);
+symbolTable.addVariable(id.image,type.image,id.beginLine);
+ if (!modifiers.isEmpty()) {
+            System.out.println("  → Field: " + modifiers + " " + type.image + " " + id.image);
+        } else {
+            System.out.println("  → Field: " + type.image + " " + id.image);
+        }
+}
+        }
+void MethodDeclaration():{
+Token returnType,methodName,tRBRACE,tLBRACE,tLPAREN,tRPAREN;
+    String modifiers = "";
+}
+{
+ [ modifiers = Modifiers() ]
+       ( returnType = Type() | returnType = <VOID> )
+       {
+           recordToken(returnType);
+       }
+methodName = <IDENTIFIER>
+ {
+recordToken(returnType);
+recordToken(methodName);
+        methodCount++;
+ if (!modifiers.isEmpty()) {
+            System.out.println("  → Method: " + modifiers + " " + returnType.image + " " + methodName.image + "()");
+        } else {
+            System.out.println("  → Method: " + returnType.image + " " + methodName.image + "()");
+        }
+    }
+    tLPAREN=<LPAREN>{recordToken(tLPAREN);}
+    [ParameterList()]
+    tRPAREN=<RPAREN>{recordToken(tRPAREN);}
+    tLBRACE=<LBRACE>{recordToken(tLBRACE);}
+    (Statement())*
+    tRBRACE=<RBRACE>{recordToken(tRBRACE);}
+}
+void ParameterList():{}
+{
+Parameter()(<COMMA> Parameter())*
+}
+void Parameter():{
+Token type,id,tLBRACKET,tRBRACKET;}
+{
+    type = Type()
+         [ tLBRACKET=<LBRACKET>{recordToken(tLBRACKET);} tRBRACKET=<RBRACKET>{recordToken(tRBRACKET);} ]  // Optional array brackets
+  id =<IDENTIFIER>
+  {recordToken(type);
+recordToken(id);
+symbolTable.addVariable(id.image,type.image,id.beginLine);
+ System.out.println("  → Parameter: " + type.image + " " + id.image); }
+}
+Token Type():{
+        Token t;}
+        {
+        (t=<INT> | t= <LONG> |t=<SHORT> |t=<BYTE> |t=<DOUBLE> |t=<FLOAT> |t=<BOOLEAN> |t=<CHAR>|t=<STRING> )
+        {return t;}
+        }
+String Modifiers() :
+{
+    Token mod;
+    List<String> modList = new ArrayList<String>();
+}
+{
+    (
+        ( mod = <PUBLIC> | mod = <PRIVATE> | mod = <PROTECTED> | mod = <STATIC> )
+        {
+            recordToken(mod);
+            modList.add(mod.image);
+        }
+    )+
+    {
+        return String.join(" ", modList);
+    }
+}
+void Statement():{}
+{
+{statementCount++;}
+       (
+
+    IfStatement()
+    |ForStatement()
+    |WhileStatement()
+    |DoWhileStatement()
+    |ReturnStatement()
+    |Block()
+    |BreakStatement()
+    |ContinueStatement()
+    |SwitchStatement()
+    | LOOKAHEAD(Type() [<LBRACKET> <RBRACKET>] <IDENTIFIER>)
+             VariableDeclaration()
+         |   LOOKAHEAD(<IDENTIFIER> <ASSIGN>)
+             AssignmentStatement()
+         |StatementExpression()
+)
+}
+void StatementExpression() : {}
+{
+    {
+        System.out.println("    → Expression statement");
+    }
+    (
+        LOOKAHEAD(<IDENTIFIER> <DOT>)
+        MemberAccess()
+    |   LOOKAHEAD(<IDENTIFIER> <LPAREN>)
+        MethodCall()
+    |   <IDENTIFIER>
+        {
+            recordToken(token);
+        }
+    )
+    <SEMICOLON>
+}
+
+void VariableDeclaration():{
+        Token type,id,tAssign,tSEMICOLON;}
+        {type =Type()
+         id=<IDENTIFIER>
+        {recordToken(type);
+         recordToken(id);
+         symbolTable.addVariable(id.image, type.image, id.beginLine);
+         System.out.println("  → Variable declared: " + type.image + " " + id.image); }
+        [tAssign = <ASSIGN> {recordToken(tAssign);} Expression()]
+        tSEMICOLON=<SEMICOLON> {recordToken(tSEMICOLON);}
+        }
+void AssignmentStatement():{
+        Token id,tAssign,tSEMICOLON;}
+        {
+        id=<IDENTIFIER> tAssign=<ASSIGN>
+            {         recordToken(id);
+         recordToken(tAssign);
+         System.out.println("  → Assignment to: " + id.image); }
+         Expression()
+         tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
+
+        }
+void IfStatement():{Token tIf,tElse,tLPAREN,tRPAREN;}
+{
+tIf=<IF>
+    {recordToken(tIf); System.out.println("  → If statement found"); }
+    tLPAREN=<LPAREN>{recordToken(tLPAREN);}
+ Expression()    tRPAREN=<RPAREN>{recordToken(tRPAREN);}
+
+Statement()
+[tElse=<ELSE>{recordToken(tElse);} Statement() ]
+}
+void WhileStatement():{Token t,tLPAREN,tRPAREN;}
+{
+t=<WHILE>
+    { recordToken(t);
+ System.out.println("  → while loop found"); }
+    tLPAREN=<LPAREN>{recordToken(tLPAREN);}
+ Expression()    tRPAREN=<RPAREN>{recordToken(tRPAREN);}
+
+Statement()
+}
+void DoWhileStatement():{Token tDo,tWhile,tLPAREN,tRPAREN;}
+{
+tDo=<DO>
+    { recordToken(tDo);
+ System.out.println("  → Do while loop found"); }
+   Statement()
+   tWhile=<WHILE>{recordToken(tWhile);}     tLPAREN=<LPAREN>{recordToken(tLPAREN);}
+ Expression()    tRPAREN=<RPAREN>{recordToken(tRPAREN);}
+
+
+}
+void ForStatement():{Token t,tLPAREN,tRPAREN,tSEMICOLON;}
+{
+t=<FOR>
+    { recordToken(t);
+ System.out.println("  → for loop found"); }
+    tLPAREN=<LPAREN>{recordToken(tLPAREN);}
+
+ [ForInit()] tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
+ [Expression()] tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
+ [ForUpdate()]
+     tRPAREN=<RPAREN>{recordToken(tRPAREN);}
+
+ Statement()
+}
+
+void ForInit():{}
+{
+LOOKAHEAD(Type() <IDENTIFIER> )
+    VariableDeclarationWithoutSemicolon()
+|   AssignmentWithoutSemicolon()
+}
+void VariableDeclarationWithoutSemicolon() :
+{
+    Token type, id,tAssign;
+}
+{
+    type = Type() id = <IDENTIFIER>
+    {
+        recordToken(type);
+        recordToken(id);
+        symbolTable.addVariable(id.image, type.image, id.beginLine);
+    }
+    [ tAssign=<ASSIGN> {recordToken(tAssign);}Expression() ]
+}
+
+void AssignmentWithoutSemicolon() :
+{
+    Token id,tAssign;
+}
+{
+    id = <IDENTIFIER>
+    {
+        recordToken(id);
+        symbolTable.markVariableUsed(id.image);
+    }
+    tAssign=<ASSIGN> {recordToken(tAssign);}Expression()
+}
+void ForUpdate():{}
+{    AssignmentWithoutSemicolon()
+}
+void ReturnStatement():{Token t,tSEMICOLON;}
+{
+t=<RETURN>
+    { recordToken(t);
+ System.out.println("  → return statement found"); }
+
+Expression()
+tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
+}
+void Block():{Token tRBRACE,tLBRACE;}
+{
+    tLBRACE=<LBRACE>{recordToken(tLBRACE);}
+ (Statement() )*    tRBRACE=<RBRACE>{recordToken(tRBRACE);}
+
+}
+void BreakStatement():{
+            Token t,tSEMICOLON;}
+{
+t=<BREAK>{recordToken(t);} tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
+}
+void ContinueStatement():{Token t,tSEMICOLON;}
+{
+t=<CONTINUE>{recordToken(t);} tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
+}
+
+void SwitchStatement() : {Token t,tLPAREN,tRPAREN,tRBRACE,tLBRACE;}
+{
+    t=<SWITCH>
+    {
+recordToken(t);
+        System.out.println("    → Switch statement");
+    }
+        tLPAREN=<LPAREN>{recordToken(tLPAREN);}
+ Expression()     tRPAREN=<RPAREN>{recordToken(tRPAREN);}
+
+
+        tLBRACE=<LBRACE>{recordToken(tLBRACE);}
+
+    ( SwitchCase() )*
+    [ DefaultCase() ]
+    tRBRACE=<RBRACE>{recordToken(tRBRACE);}
+}
+
+void SwitchCase() : {Token t,tCOLON;}
+{
+    t=<CASE>
+    {recordToken(t);
+        System.out.println("      → Case branch");
+    }
+    (
+        <INTEGER_LITERAL>
+    |   <CHAR_LITERAL>
+    |   <STRING_LITERAL>
+    |   <IDENTIFIER>
+    )
+    tCOLON=<COLON>{recordToken(tCOLON);}
+    ( LOOKAHEAD(2) Statement() )*
+}
+
+void DefaultCase() : {Token t,tCOLON;}
+{
+    t=<DEFAULt>
+    {recordToken(t);
+        System.out.println("      → Default branch");
+    }
+    tCOLON=<COLON>{recordToken(tCOLON);}
+    ( LOOKAHEAD(2) Statement() )*
+}
+
+
+void Expression() : {}
+{
+{expressionCount++;}
+LogicalOrExpression()
+}
+void LogicalOrExpression(): {
+ Token t;}
+{
+LogicalAndExpression()
+    ( t=<OR> {recordToken(t);} LogicalAndExpression() )*
+}
+
+void LogicalAndExpression():{
+ Token t;}
+{
+ EqualityExpression()
+    ( t=<AND> {recordToken(t);} EqualityExpression() )*
+}
+
+void EqualityExpression():{
+ Token t;}
+{
+ RelationalExpression()
+    ( (t=<EQ> {recordToken(t);}
+      |t=<NE> {recordToken(t);}) RelationalExpression() )*
+}
+void RelationalExpression():{
+ Token t;}
+{
+    AdditiveExpression()
+    ( (t=<LT> {recordToken(t);}
+    | t=<LE> {recordToken(t);}
+    | t=<GT> {recordToken(t);}
+    | t=<GE>{recordToken(t);}) AdditiveExpression() )*
+}
+
+void AdditiveExpression():{
+ Token t;}
+{
+MultiplicativeExpression()
+    (
+    (t=<PLUS> {recordToken(t);}
+    |t=<MINUS> {recordToken(t);}) MultiplicativeExpression() )*
+}
+void MultiplicativeExpression() : {
+ Token t;}
+{
+    UnaryExpression()
+    ( (t=<MULTIPLY> {recordToken(t);}
+    |  t=<DIVIDE> {recordToken(t);}) UnaryExpression() )*
+}
+
+void UnaryExpression() : {
+ Token t;}
+{
+    (t=<NOT> {recordToken(t);}
+    |t=<MINUS> {recordToken(t);}) UnaryExpression()
+|   PrimaryExpression()
+}
+
+void PrimaryExpression() :
+{
+    Token t,tLPAREN,tRPAREN;
+}
+{
+    t = <INTEGER_LITERAL> { recordToken(t); }
+|   t = <LONG_LITERAL> { recordToken(t); }
+|   t = <FLOAT_LITERAL> { recordToken(t); }
+|   t = <DOUBLE_LITERAL> { recordToken(t); }
+|   t = <STRING_LITERAL> { recordToken(t); }
+|   t = <CHAR_LITERAL> { recordToken(t); }
+|   t = <TRUE> { recordToken(t); }
+|   t = <FALSE> { recordToken(t); }
+|   LOOKAHEAD(<IDENTIFIER> <DOT>)
+        MemberAccess()
+|   LOOKAHEAD(<IDENTIFIER> <LPAREN>)
+        MethodCall()
+|   t = <IDENTIFIER>
+
+    {
+        recordToken(t);
+    }
+|       tLPAREN=<LPAREN>{recordToken(tLPAREN);}
+ Expression()     tRPAREN=<RPAREN>{recordToken(tRPAREN);}
+
+}
+void MemberAccess() :
+{
+    Token id;
+}
+{
+    id = <IDENTIFIER>
+    {
+        recordToken(id);
+    }
+    (
+        <DOT> id = <IDENTIFIER>
+        {
+            recordToken(id);
+        }
+        [ <LPAREN> [ ArgumentList() ] <RPAREN> ]
+    )+
+}
+
+void MethodCall() :
+{
+    Token id;
+}
+{
+    id = <IDENTIFIER>
+    {
+        recordToken(id);
+        symbolTable.markVariableUsed(id.image);
+    }
+    <LPAREN>
+    [ ArgumentList() ]
+    <RPAREN>
+}
+void MethodCallStatement() : {}
+{
+    {
+        System.out.println("    → Method call statement");
+    }
+    (
+        LOOKAHEAD(<IDENTIFIER> <DOT>)
+        MemberAccess()
+    |   MethodCall()
+    )
+    <SEMICOLON>
+}
+
+void ArgumentList() : {}
+{
+    Expression() ( <COMMA> Expression() )*
+}
