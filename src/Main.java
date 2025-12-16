@@ -1,6 +1,4 @@
-import parser.JavaParser;
-import parser.ParseException;
-import parser.TokenMgrError;
+import parser.ASTNode;
 
 import java.io.*;
 
@@ -20,10 +18,11 @@ public class Main {
         String filename = args[0];
 
         try {
-            // Display header
             System.out.println("╔════════════════════════════════════════╗");
-            System.out.println("║   Java Compiler - Phases 1 & 2        ║");
-            System.out.println("║   Lexical Analysis + Syntax Analysis   ║");
+            System.out.println("║   Java Compiler - Full Implementation ║");
+            System.out.println("║   Phase 1: Lexical Analysis           ║");
+            System.out.println("║   Phase 2: Syntax Analysis             ║");
+            System.out.println("║   Phase 3: AST Construction            ║");
             System.out.println("╚════════════════════════════════════════╝");
             System.out.println();
             System.out.println("Input file: " + filename);
@@ -37,8 +36,8 @@ public class Main {
             System.out.println("PHASE 2: PARSING PROGRAM STRUCTURE");
             System.out.println("========================================");
 
-            // Parse the input (Phase 2)
-            parser.Program();
+            // Parse the input and build AST (Phase 2 & 3)
+            ASTNode ast = parser.Program();
 
             // If we reach here, parsing was successful
             System.out.println();
@@ -62,7 +61,13 @@ public class Main {
             System.out.println("========================================");
             parser.printVariables();
             System.out.println();
-
+            // Display AST (Phase 3)
+            System.out.println("========================================");
+            System.out.println("PHASE 3: ABSTRACT SYNTAX TREE (AST)");
+            System.out.println("========================================");
+            ast.print(0);
+            ast.printTree("",true);
+            System.out.println();
             // Check for unused variables
             java.util.List<String> unused = parser.getUnusedVariables();
             if (!unused.isEmpty()) {
@@ -113,14 +118,6 @@ public class Main {
                 System.err.println();
             }
 
-            // Suggestions
-            System.err.println("Common causes:");
-            System.err.println("  • Missing semicolon (;)");
-            System.err.println("  • Unmatched braces { }");
-            System.err.println("  • Missing parentheses ( )");
-            System.err.println("  • Incorrect keyword spelling");
-            System.err.println();
-
             System.exit(1);
 
         } catch (TokenMgrError e) {
@@ -148,7 +145,11 @@ public class Main {
             System.err.println("✗ ERROR: Could not read file: " + e.getMessage());
             System.exit(1);
 
-        } catch (Exception e) {
+        }catch ( RuntimeException e)
+        {
+            System.err.println(e.getMessage());
+            System.exit(1);
+        }catch (Exception e) {
             System.err.println("✗ UNEXPECTED ERROR: " + e.getMessage());
             e.printStackTrace();
             System.exit(1);

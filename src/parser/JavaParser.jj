@@ -6,6 +6,7 @@ options {
 PARSER_BEGIN(JavaParser)
 package parser;
 import parser.SymbolTable;import java.util.*;
+import parser.ASTNode;
 
 public class JavaParser {
     // Use external parser.SymbolTable class
@@ -28,60 +29,19 @@ public class JavaParser {
 
         // Map to token type names
     switch (name) {
-            case "class":
-            case "public":
-            case "private":
-            case"protected":
-            case"final":
-            case"const":
-            case "static":
-            case "void":
-            case "int":
-            case "double":
-            case "float":
-            case "long":
-            case "short":
-            case "byte":
-            case "char":
-            case "boolean":
-            case "if":
-            case "else":
-            case "while":
-            case "do":
-            case "for":
-            case "return":
-            case "break":
-            case "continue":
-            case "true":
-            case "false":
+            case "class": case "public": case "private": case"protected":
+            case"final": case"const": case "static": case "void": case "int":
+            case "double": case "float": case "long": case "short": case "byte":
+            case "char": case "boolean": case "if": case "else": case "while": case "do":
+            case "for": case "return": case "break": case "continue": case "true": case "false":
                 return "Keyword";
 
-            case "=":
-            case "+":
-            case "-":
-            case "*":
-            case "/":
-            case "%":
-            case "==":
-            case "!=":
-            case "<":
-            case ">":
-            case "<=":
-            case ">=":
-            case "&&":
-            case "||":
-            case "!":
+            case "=": case "+": case "-": case "*": case "/": case "%": case "==": case "!=": case "<":
+            case ">": case "<=": case ">=": case "&&": case "||": case "!": case "++": case "--":
                 return "Operator";
 
-            case "(":
-            case ")":
-            case "{":
-            case "}":
-            case "[":
-            case "]":
-            case ";":
-            case ",":
-            case ".":
+            case "(": case ")": case "{": case "}": case "[":
+            case "]": case ";": case ",": case ".":
                 return "Delimiters";
 
             default:
@@ -121,7 +81,7 @@ public class JavaParser {
 PARSER_END(JavaParser)
 
 
-
+/* ==================SKIP============*/
 SKIP : {
   " " | "\t" | "\n" | "\r" | "\f"
 }
@@ -131,85 +91,40 @@ SKIP : {
 | <MULTI_LINE_COMMENT: "/*" (~["*"])* "*" ("*" | (~["*","/"] (~["*"])* "*"))* "/">
 }
 
+/* ==================TOKENS============*/
+
 TOKEN : {
 //KEYWORD
- <CLASS:"class">
-|<PUBLIC:"public">
-|<PRIVATE:"private">
-|<PROTECTED:"protected">
-|<FINAL:"final">
-|<ABSTRACT:"abstract">
-|<CONST:"const">
-|<STATIC:"static">
-|<VOID:"void">
-|<INT:"int">
-|<LONG:"long">
-|<SHORT:"short">
-|<BYTE:"byte">
-|<FLOAT:"float">
-|<DOUBLE:"double">
-|<STRING:"String">
-|<CHAR:"char">
-|<BOOLEAN:"boolean">
-|<IF:"if">
-|<ELSE:"else">
-|<WHILE:"while">
-|<DO:"do">
-|<FOR:"for">
-|<RETURN:"return">
-|<TRUE:"true">
-|<FALSE:"false">
-|<NEW:"new">
-|<THIS:"this">
-|<BREAK:"break">
-|<CONTINUE:"continue">
-|<SWITCH: "switch">
-|<CASE:"case">
-|<DEFAULt:"default">
+ <CLASS:"class">|<PUBLIC:"public">|<PRIVATE:"private">|<PROTECTED:"protected">
+|<FINAL:"final">|<ABSTRACT:"abstract">|<CONST:"const">|<STATIC:"static">
+|<VOID:"void">|<INT:"int">|<LONG:"long">|<SHORT:"short">|<BYTE:"byte">
+|<FLOAT:"float">|<DOUBLE:"double">|<STRING:"String">|<CHAR:"char">
+|<BOOLEAN:"boolean">|<IF:"if">|<ELSE:"else">|<WHILE:"while">
+|<DO:"do">|<FOR:"for">|<RETURN:"return">|<TRUE:"true">
+|<FALSE:"false">|<NEW:"new">|<THIS:"this">|<BREAK:"break">
+|<CONTINUE:"continue">|<SWITCH: "switch">|<CASE:"case">|<DEFAULt:"default">
 }
+
 TOKEN : {
 //OPERATORS
- <ASSIGN:"=">
-|<PLUS:"+">
-|<MINUS:"-">
-|<DIVIDE:"/">
-|<MULTIPLY:"*">
-|<MODULO:"%">
-|<EQ:"==">
-|<NE:"!=">
-|<LT:"<">
-|<LE:"<=">
-|<GT:">">
-|<GE:">=">
-|<AND:"&&">
-|<OR:"||">
-|<NOT:"!">
-|<INCREMENT:"++">
-|<DECREMENT:"--">
+ <ASSIGN:"=">|<PLUS:"+">|<MINUS:"-">|<DIVIDE:"/">
+|<MULTIPLY:"*">|<MODULO:"%">|<EQ:"==">|<NE:"!=">
+|<LT:"<">|<LE:"<=">|<GT:">">|<GE:">=">|<AND:"&&">
+|<OR:"||">|<NOT:"!">|<INCREMENT:"++">|<DECREMENT:"--">
 }
 
 TOKEN : {
 //DELIMITERS
-  <LPAREN: "(">
-| <RPAREN: ")">
-| <LBRACE: "{">
-| <RBRACE: "}">
-| <LBRACKET: "[">
-| <RBRACKET: "]">
-| <SEMICOLON: ";">
-| <COMMA: ",">
-| <DOT: ".">
-| <COLON:":">
+  <LPAREN: "(">| <RPAREN: ")">| <LBRACE: "{">| <RBRACE: "}">
+| <LBRACKET: "[">| <RBRACKET: "]">| <SEMICOLON: ";">| <COMMA: ",">
+| <DOT: ".">| <COLON:":">
 }
 
 TOKEN : {
 //LITERAL
-  <INTEGER_LITERAL: (["0"-"9"])+>
-| <LONG_LITERAL: (["0"-"9"])+ ("l"|"L")>
-| <FLOAT_LITERAL: (["0"-"9"])+ "." (["0"-"9"])+ ("f"|"F")
-                | (["0"-"9"])+ ("f"|"F")>
-| <DOUBLE_LITERAL: (["0"-"9"])+ "." (["0"-"9"])+
-                 | (["0"-"9"])+ "." (["0"-"9"])+ ("d"|"D")>
+  <INTEGER_LITERAL: (["0"-"9"])+>| <LONG_LITERAL: (["0"-"9"])+ ("l"|"L")>
+| <FLOAT_LITERAL: (["0"-"9"])+ "." (["0"-"9"])+ ("f"|"F") | (["0"-"9"])+ ("f"|"F")>
+| <DOUBLE_LITERAL: (["0"-"9"])+ "." (["0"-"9"])+| (["0"-"9"])+ "." (["0"-"9"])+ ("d"|"D")>
 | <STRING_LITERAL: "\"" (~["\"","\\"] | "\\" ~[])* "\"">
 | <CHAR_LITERAL: "'" (~["'","\\"] | "\\" ~[]) "'">
 | <BOOLEAN_LITERAL: "true" | "false">
@@ -223,16 +138,25 @@ TOKEN : {
 
 ///=====================phase2:parsing====================///
 
-void Program():{}
+ASTNode Program():{
+ ASTNode classDecl;
+ ProgrameNode program = new ProgrameNode();
+ }
 {
-ClassDeclaration()
+classDecl= ClassDeclaration()
+   { program.addClass(classDecl); }
 <EOF>
-{System.out.println("-> Program Structure validate.");}
+{System.out.println("-> Program Structure validate.");
+return program;
+}
 }
 
-void ClassDeclaration():{
+ASTNode ClassDeclaration():{
         Token tCLASS,className,tRBRACE,tLBRACE;
-        String modifiers = "";}
+        String modifiers = "";
+        ClassNode classNode;
+        ASTNode member;
+        }
 {
  [ modifiers = Modifiers() ]
  tCLASS=<CLASS> className =<IDENTIFIER>
@@ -240,40 +164,56 @@ void ClassDeclaration():{
 recordToken(tCLASS);
 recordToken(className);
 classCount++;
+        classNode = new ClassNode(className.image,modifiers, className.beginLine, className.beginColumn);
+
  if (!modifiers.isEmpty()) {
             System.out.println("→ Found class: " + modifiers + " " + className.image);
         } else {
             System.out.println("→ Found class: " + className.image);
         } }
 tLBRACE=<LBRACE>{recordToken(tLBRACE);}
-(MemberDeclaration())*
-tRBRACE=<RBRACE>{recordToken(tRBRACE);}
+(member=MemberDeclaration()
+{classNode.addMember(member);})*
+tRBRACE=<RBRACE>
+{recordToken(tRBRACE);
+ return classNode;
+}
 }
 
-void MemberDeclaration() : {}
+ASTNode MemberDeclaration() : {
+            ASTNode node;}
 {
+(
     LOOKAHEAD(Modifiers() Type() [<LBRACKET> <RBRACKET>] <IDENTIFIER> <SEMICOLON>)
-    FieldDeclaration()
+    node=FieldDeclaration()
 |   LOOKAHEAD(Modifiers() Type() [<LBRACKET> <RBRACKET>] <IDENTIFIER> <LPAREN>)
-    MethodDeclaration()
+    node=MethodDeclaration()
 |   LOOKAHEAD(Modifiers() <VOID> <IDENTIFIER> <LPAREN>)
-    MethodDeclaration()
+    node=MethodDeclaration()
 |   LOOKAHEAD(Type() [<LBRACKET> <RBRACKET>] <IDENTIFIER> <SEMICOLON>)
-    FieldDeclaration()
+    node=FieldDeclaration()
 |   LOOKAHEAD(Type() [<LBRACKET> <RBRACKET>] <IDENTIFIER> <LPAREN>)
-    MethodDeclaration()
+    node=MethodDeclaration()
 |   LOOKAHEAD(<VOID> <IDENTIFIER> <LPAREN>)
-    MethodDeclaration()
+    node=MethodDeclaration()
+)
+    {return node;}
 }
 
-void FieldDeclaration():{
+ASTNode FieldDeclaration():{
         Token type,id,tSEMICOLON,tLBRACKET,tRBRACKET;
         String modifiers = "";
+            boolean isArray = false;
+
 }
         {
          [ modifiers = Modifiers() ]
         type= Type()
-         [ tLBRACKET=<LBRACKET>{recordToken(tLBRACKET);} tRBRACKET=<RBRACKET>{recordToken(tRBRACKET);} ]  // Optional array brackets
+          [tLBRACKET=<LBRACKET> tRBRACKET=<RBRACKET> {
+                                                        recordToken(tLBRACKET);
+                                                        recordToken(tRBRACKET);
+                                                        isArray = true;
+                                                        }]
          id = <IDENTIFIER>  tSEMICOLON=<SEMICOLON>
         {
 fieldCount++;
@@ -286,50 +226,71 @@ symbolTable.addVariable(id.image,type.image,id.beginLine);
         } else {
             System.out.println("  → Field: " + type.image + " " + id.image);
         }
+        return new FieldNode(modifiers, type.image, id.image, isArray, id.beginLine, id.beginColumn);
+
 }
         }
-void MethodDeclaration():{
+
+ASTNode MethodDeclaration():{
 Token returnType,methodName,tRBRACE,tLBRACE,tLPAREN,tRPAREN;
     String modifiers = "";
+    MethodNode methodNode ;
+    List<ASTNode> params = new ArrayList<ASTNode>();
+    List<ASTNode> statements = new ArrayList<ASTNode>();
+    ASTNode param, stmt;
 }
 {
  [ modifiers = Modifiers() ]
-       ( returnType = Type() | returnType = <VOID> )
-       {
-           recordToken(returnType);
-       }
-methodName = <IDENTIFIER>
+ ( returnType = Type() | returnType = <VOID> )
  {
-recordToken(returnType);
-recordToken(methodName);
+       recordToken(returnType);
+ }
+    methodName = <IDENTIFIER>
+ {
+        recordToken(methodName);
         methodCount++;
- if (!modifiers.isEmpty()) {
-            System.out.println("  → Method: " + modifiers + " " + returnType.image + " " + methodName.image + "()");
-        } else {
-            System.out.println("  → Method: " + returnType.image + " " + methodName.image + "()");
-        }
-    }
+        methodNode = new MethodNode(modifiers, returnType.image, methodName.image,
+                                            methodName.beginLine, methodName.beginColumn);
+     if (!modifiers.isEmpty()) {
+                System.out.println("  → Method: " + modifiers + " " + returnType.image + " " + methodName.image + "()");
+     } else {
+                System.out.println("  → Method: " + returnType.image + " " + methodName.image + "()");
+     }
+ }
     tLPAREN=<LPAREN>{recordToken(tLPAREN);}
-    [ParameterList()]
+    [param = Parameter() {params.add(param);} (<COMMA> param = Parameter() {params.add(param);})*]
     tRPAREN=<RPAREN>{recordToken(tRPAREN);}
     tLBRACE=<LBRACE>{recordToken(tLBRACE);}
-    (Statement())*
-    tRBRACE=<RBRACE>{recordToken(tRBRACE);}
+    (stmt = Statement() {statements.add(stmt);})*
+    tRBRACE=<RBRACE>{
+       recordToken(tRBRACE);
+       methodNode.setParameter(params);
+       methodNode.setStatement(statements);
+       return methodNode;
+        }
 }
-void ParameterList():{}
-{
-Parameter()(<COMMA> Parameter())*
+
+ASTNode Parameter():{
+    Token type,id,tLBRACKET,tRBRACKET;
+    boolean isArray = false;
 }
-void Parameter():{
-Token type,id,tLBRACKET,tRBRACKET;}
 {
-    type = Type()
-         [ tLBRACKET=<LBRACKET>{recordToken(tLBRACKET);} tRBRACKET=<RBRACKET>{recordToken(tRBRACKET);} ]  // Optional array brackets
+    type = Type(){recordToken(type);}
+    [
+       tLBRACKET=<LBRACKET> tRBRACKET=<RBRACKET>
+       {recordToken(tLBRACKET);
+        recordToken(tRBRACKET);
+        isArray=true;
+        }]  // Optional array brackets
   id =<IDENTIFIER>
-  {recordToken(type);
-recordToken(id);
-symbolTable.addVariable(id.image,type.image,id.beginLine);
- System.out.println("  → Parameter: " + type.image + " " + id.image); }
+  {
+
+        recordToken(id);
+        symbolTable.addVariable(id.image,type.image,id.beginLine);
+        System.out.println("  → Parameter: " + type.image + " " + id.image);
+        return new ParameterNode(type.image, id.image, isArray, id.beginLine, id.beginColumn);
+
+ }
 }
 Token Type():{
         Token t;}
@@ -354,122 +315,207 @@ String Modifiers() :
         return String.join(" ", modList);
     }
 }
-void Statement():{}
+ASTNode Statement():{
+ ASTNode node;}
 {
-{statementCount++;}
-       (
+    {statementCount++;}
+    (
+            node = IfStatement()
+        |   node = ForStatement()
+        |   node = WhileStatement()
+        |   node = DoWhileStatement()
+        |   node = ReturnStatement()
+        |   node = Block()
+        |   node = BreakStatement()
+        |   node = ContinueStatement()
+        |   node = SwitchStatement()
+        |   LOOKAHEAD(Type() [<LBRACKET><RBRACKET>] <IDENTIFIER>)
+            node = VariableDeclaration()
+        |   LOOKAHEAD(<IDENTIFIER> <ASSIGN>)
+            node = AssignmentStatement()
+        |   node = StatementExpression()
+        )
+        { return node; }
 
-    IfStatement()
-    |ForStatement()
-    |WhileStatement()
-    |DoWhileStatement()
-    |ReturnStatement()
-    |Block()
-    |BreakStatement()
-    |ContinueStatement()
-    |SwitchStatement()
-    | LOOKAHEAD(Type() [<LBRACKET> <RBRACKET>] <IDENTIFIER>)
-             VariableDeclaration()
-         |   LOOKAHEAD(<IDENTIFIER> <ASSIGN>)
-             AssignmentStatement()
-         |StatementExpression()
-)
 }
-void StatementExpression() : {}
+ASTNode StatementExpression() : {
+   ASTNode node;
+     Token tSEMICOLON;
+ }
 {
     {
         System.out.println("    → Expression statement");
     }
     (
         LOOKAHEAD(<IDENTIFIER> <DOT>)
-        MemberAccess()
+        node = MemberAccess()
     |   LOOKAHEAD(<IDENTIFIER> <LPAREN>)
-        MethodCall()
-    |   <IDENTIFIER>
-        {
-            recordToken(token);
-        }
+        node = MethodCall()
+    |   LOOKAHEAD(<IDENTIFIER> <INCREMENT>)
+        node = PostIncrementExpression()
+    |   LOOKAHEAD(<IDENTIFIER> <DECREMENT>)
+        node = PostDecrementExpression()
+    |   LOOKAHEAD(<INCREMENT> <IDENTIFIER>)
+        node = PreIncrementExpression()
+    |   LOOKAHEAD(<DECREMENT> <IDENTIFIER>)
+        node = PreDecrementExpression()
+    |   node = PrimaryExpression()
     )
-    <SEMICOLON>
+    tSEMICOLON=<SEMICOLON>
+    {recordToken(tSEMICOLON);
+     return node; }
 }
 
-void VariableDeclaration():{
-        Token type,id,tAssign,tSEMICOLON;}
-        {type =Type()
+ASTNode VariableDeclaration():{
+    Token type, id, tAssign, tSEMICOLON, tLBRACKET, tRBRACKET;
+    boolean isArray = false;
+    ASTNode initializer = null;
+}
+{
+    type =Type() {recordToken(type);}
+    [
+        tLBRACKET=<LBRACKET> tRBRACKET=<RBRACKET>
+        {recordToken(tLBRACKET);
+         recordToken(tRBRACKET);
+         isArray = true;
+
+         }]
          id=<IDENTIFIER>
-        {recordToken(type);
+        {
          recordToken(id);
          symbolTable.addVariable(id.image, type.image, id.beginLine);
          System.out.println("  → Variable declared: " + type.image + " " + id.image); }
-        [tAssign = <ASSIGN> {recordToken(tAssign);} Expression()]
-        tSEMICOLON=<SEMICOLON> {recordToken(tSEMICOLON);}
+    [tAssign = <ASSIGN> {recordToken(tAssign);} initializer = Expression()]
+        tSEMICOLON=<SEMICOLON>
+        {recordToken(tSEMICOLON);
+         return new VariableDeclarationNode(type.image, id.image, isArray, initializer,
+                                          id.beginLine, id.beginColumn);
+
+}
         }
-void AssignmentStatement():{
-        Token id,tAssign,tSEMICOLON;}
-        {
+ASTNode AssignmentStatement():{
+        Token id,tAssign,tSEMICOLON;
+            ASTNode expr;
+}
+{
         id=<IDENTIFIER> tAssign=<ASSIGN>
-            {         recordToken(id);
-         recordToken(tAssign);
+
+        {
+            recordToken(id);
+            recordToken(tAssign);
+                 if (!symbolTable.isVariableDeclared(id.image)) {
+                     throw new RuntimeException ("Semantic Error: Variable '" + id.image +
+                                                     "' used before declaration at line " + id.beginLine) ;
+                 } else {
+                     symbolTable.markVariableUsed(id.image);
+                 }
          System.out.println("  → Assignment to: " + id.image); }
-         Expression()
-         tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
+         expr=Expression()
+         tSEMICOLON=<SEMICOLON>
+        {
+         recordToken(tSEMICOLON);
+         return new AssignmentNode(id.image, expr, id.beginLine, id.beginColumn);
+         }
 
         }
-void IfStatement():{Token tIf,tElse,tLPAREN,tRPAREN;}
+ASTNode IfStatement():{
+            Token tIf,tElse,tLPAREN,tRPAREN;
+            ASTNode condition, thenStmt, elseStmt = null;
+}
 {
 tIf=<IF>
-    {recordToken(tIf); System.out.println("  → If statement found"); }
-    tLPAREN=<LPAREN>{recordToken(tLPAREN);}
- Expression()    tRPAREN=<RPAREN>{recordToken(tRPAREN);}
-
-Statement()
-[tElse=<ELSE>{recordToken(tElse);} Statement() ]
-}
-void WhileStatement():{Token t,tLPAREN,tRPAREN;}
 {
-t=<WHILE>
-    { recordToken(t);
- System.out.println("  → while loop found"); }
-    tLPAREN=<LPAREN>{recordToken(tLPAREN);}
- Expression()    tRPAREN=<RPAREN>{recordToken(tRPAREN);}
-
-Statement()
+    recordToken(tIf);
+    System.out.println("  → If statement found");
 }
-void DoWhileStatement():{Token tDo,tWhile,tLPAREN,tRPAREN;}
-{
-tDo=<DO>
-    { recordToken(tDo);
- System.out.println("  → Do while loop found"); }
-   Statement()
-   tWhile=<WHILE>{recordToken(tWhile);}     tLPAREN=<LPAREN>{recordToken(tLPAREN);}
- Expression()    tRPAREN=<RPAREN>{recordToken(tRPAREN);}
-
-
-}
-void ForStatement():{Token t,tLPAREN,tRPAREN,tSEMICOLON;}
-{
-t=<FOR>
-    { recordToken(t);
- System.out.println("  → for loop found"); }
     tLPAREN=<LPAREN>{recordToken(tLPAREN);}
+    condition = Expression()
+    tRPAREN=<RPAREN>{recordToken(tRPAREN);}
+    thenStmt = Statement()
+[
+    tElse=<ELSE>{recordToken(tElse);}
+    elseStmt = Statement() ]
+    {
+        return new IfNode(condition, thenStmt, elseStmt, tIf.beginLine, tIf.beginColumn);
+    }
+}
+ASTNode WhileStatement():{
+            Token t,tLPAREN,tRPAREN;
+            ASTNode condition, body;
+}
+{
+    t=<WHILE>
+    {
+         recordToken(t);
+         System.out.println("  → while loop found");
+    }
+    tLPAREN=<LPAREN>{recordToken(tLPAREN);}
+    condition = Expression()
+    tRPAREN=<RPAREN>{recordToken(tRPAREN);}
+    body = Statement()
+    {
+        return new WhileNode(condition, body, t.beginLine, t.beginColumn);
+    }
+}
+ASTNode DoWhileStatement():{
+        Token tDo,tWhile,tLPAREN,tRPAREN,tSEMI;
+        ASTNode body, condition;
+}
+{
+    tDo=<DO>
+    {
+        recordToken(tDo);
+        System.out.println("  → Do while loop found");
+    }
+    body = Statement()
+    tWhile=<WHILE>{recordToken(tWhile);}
+    tLPAREN=<LPAREN>{recordToken(tLPAREN);}
+    condition = Expression()
+    tRPAREN=<RPAREN>  tSEMI=<SEMICOLON>
+    {
+        recordToken(tRPAREN);
+        recordToken(tSEMI);
+        return new DoWhileNode(condition, body, tDo.beginLine, tDo.beginColumn);
+}
+}
 
- [ForInit()] tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
- [Expression()] tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
- [ForUpdate()]
+ASTNode ForStatement(): {
+        Token t,tLPAREN,tRPAREN,tSEMICOLON;
+        ASTNode init = null, condition = null, update = null, body;
+}
+{
+    t=<FOR>
+    {
+     recordToken(t);
+     System.out.println("  → for loop found"); }
+     tLPAREN=<LPAREN>{recordToken(tLPAREN);}
+
+     [init = ForInit()]
+     tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
+     [condition = Expression()]
+     tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
+     [update = ForUpdate()]
      tRPAREN=<RPAREN>{recordToken(tRPAREN);}
-
- Statement()
+     body = Statement()
+     {
+        return new ForNode(init, condition, update, body, t.beginLine, t.beginColumn);
+     }
 }
 
-void ForInit():{}
+ASTNode ForInit():{
+    ASTNode node;
+}
 {
-LOOKAHEAD(Type() <IDENTIFIER> )
-    VariableDeclarationWithoutSemicolon()
-|   AssignmentWithoutSemicolon()
+(   LOOKAHEAD(Type() <IDENTIFIER> )
+    node = VariableDeclarationWithoutSemicolon()
+|   node = AssignmentWithoutSemicolon()
+)
+    {return node ;}
 }
-void VariableDeclarationWithoutSemicolon() :
+ASTNode VariableDeclarationWithoutSemicolon() :
 {
     Token type, id,tAssign;
+    ASTNode initializer = null;
 }
 {
     type = Type() id = <IDENTIFIER>
@@ -478,12 +524,17 @@ void VariableDeclarationWithoutSemicolon() :
         recordToken(id);
         symbolTable.addVariable(id.image, type.image, id.beginLine);
     }
-    [ tAssign=<ASSIGN> {recordToken(tAssign);}Expression() ]
+    [ tAssign=<ASSIGN> {recordToken(tAssign);} initializer = Expression() ]
+    {
+        return new VariableDeclarationNode(type.image, id.image, false, initializer,
+                                          id.beginLine, id.beginColumn);
+    }
 }
 
-void AssignmentWithoutSemicolon() :
+ASTNode AssignmentWithoutSemicolon() :
 {
     Token id,tAssign;
+    ASTNode expr;
 }
 {
     id = <IDENTIFIER>
@@ -491,213 +542,525 @@ void AssignmentWithoutSemicolon() :
         recordToken(id);
         symbolTable.markVariableUsed(id.image);
     }
-    tAssign=<ASSIGN> {recordToken(tAssign);}Expression()
+    tAssign=<ASSIGN> {recordToken(tAssign);}
+    expr = Expression()
+    {
+        return new AssignmentNode(id.image, expr, id.beginLine, id.beginColumn);
+    }
 }
-void ForUpdate():{}
-{    AssignmentWithoutSemicolon()
+ASTNode ForUpdate():{
+    ASTNode node;
 }
-void ReturnStatement():{Token t,tSEMICOLON;}
 {
-t=<RETURN>
-    { recordToken(t);
- System.out.println("  → return statement found"); }
-
-Expression()
-tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
+(
+    LOOKAHEAD(<IDENTIFIER> <ASSIGN>)
+    node = AssignmentWithoutSemicolon()
+|   LOOKAHEAD(<IDENTIFIER> <INCREMENT>)
+    node = PostIncrementExpressionWithoutSemicolon()
+|   LOOKAHEAD(<IDENTIFIER> <DECREMENT>)
+    node = PostDecrementExpressionWithoutSemicolon()
+|   LOOKAHEAD(<INCREMENT> <IDENTIFIER>)
+    node = PreIncrementExpressionWithoutSemicolon()
+|   LOOKAHEAD(<DECREMENT> <IDENTIFIER>)
+    node = PreDecrementExpressionWithoutSemicolon()
+)
+    { return node; }
 }
-void Block():{Token tRBRACE,tLBRACE;}
+ASTNode PostIncrementExpressionWithoutSemicolon() :
+{
+    Token id,tINC;
+}
+{
+    id = <IDENTIFIER> tINC=<INCREMENT>
+    {
+        recordToken(id);
+        recordToken(tINC);
+        symbolTable.markVariableUsed(id.image);
+        return new UnaryOpNode("++", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                               false, id.beginLine, id.beginColumn);
+    }
+}
+
+ASTNode PostDecrementExpressionWithoutSemicolon() :
+{
+    Token id,tDEC;
+}
+{
+    id = <IDENTIFIER> tDEC=<DECREMENT>
+    {
+        recordToken(id);
+        recordToken(tDEC);
+        symbolTable.markVariableUsed(id.image);
+        return new UnaryOpNode("--", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                               false, id.beginLine, id.beginColumn);
+    }
+}
+
+ASTNode PreIncrementExpressionWithoutSemicolon() :
+{
+    Token id,tINC;
+}
+{
+    tINC=<INCREMENT> id = <IDENTIFIER>
+    {
+        recordToken(tINC);
+        recordToken(id);
+        symbolTable.markVariableUsed(id.image);
+        return new UnaryOpNode("++", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                               true, id.beginLine, id.beginColumn);
+    }
+}
+
+ASTNode PreDecrementExpressionWithoutSemicolon() :
+{
+    Token id,tDEC;
+}
+{
+    tDEC=<DECREMENT> id = <IDENTIFIER>
+    {
+        recordToken(tDEC);
+        recordToken(id);
+        symbolTable.markVariableUsed(id.image);
+        return new UnaryOpNode("--", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                                      true, id.beginLine, id.beginColumn);
+    }
+}
+
+ASTNode ReturnStatement():{
+    Token t,tSEMICOLON;
+    ASTNode expr;
+}
+{
+    t=<RETURN>
+    {
+        recordToken(t);
+        System.out.println("  → return statement found"); }
+
+    expr = Expression()
+    tSEMICOLON=<SEMICOLON>
+    {
+        recordToken(tSEMICOLON);
+        return new ReturnNode(expr, t.beginLine, t.beginColumn);
+    }
+}
+ASTNode Block(): {
+   Token tRBRACE,tLBRACE;
+    List<ASTNode> statements = new ArrayList<ASTNode>();
+    ASTNode stmt;
+}
 {
     tLBRACE=<LBRACE>{recordToken(tLBRACE);}
- (Statement() )*    tRBRACE=<RBRACE>{recordToken(tRBRACE);}
-
-}
-void BreakStatement():{
-            Token t,tSEMICOLON;}
-{
-t=<BREAK>{recordToken(t);} tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
-}
-void ContinueStatement():{Token t,tSEMICOLON;}
-{
-t=<CONTINUE>{recordToken(t);} tSEMICOLON=<SEMICOLON>{recordToken(tSEMICOLON);}
+    (stmt = Statement() {statements.add(stmt);})*
+    tRBRACE=<RBRACE>
+    {
+        recordToken(tRBRACE);
+        return new BlockNode(statements, tLBRACE.beginLine, tLBRACE.beginColumn);
 }
 
-void SwitchStatement() : {Token t,tLPAREN,tRPAREN,tRBRACE,tLBRACE;}
+}
+ASTNode BreakStatement():{
+    Token t,tSEMICOLON;
+}
+{
+    t=<BREAK>{recordToken(t);}
+    tSEMICOLON=<SEMICOLON>
+    {
+        recordToken(tSEMICOLON);
+        return new BreakNode(t.beginLine, t.beginColumn);
+}
+}
+ASTNode ContinueStatement() : {
+    Token t, tSEMICOLON;
+}
+{
+    t=<CONTINUE> {recordToken(t);}
+    tSEMICOLON=<SEMICOLON>
+    {
+        recordToken(tSEMICOLON);
+        return new ContinueNode(t.beginLine, t.beginColumn);
+    }
+}
+
+ASTNode SwitchStatement() : {
+    Token t, tLPAREN, tRPAREN, tRBRACE, tLBRACE;
+    ASTNode expr;
+    SwitchNode switchNode;
+    ASTNode caseNode, defaultNode = null;
+}
 {
     t=<SWITCH>
     {
-recordToken(t);
+        recordToken(t);
         System.out.println("    → Switch statement");
     }
-        tLPAREN=<LPAREN>{recordToken(tLPAREN);}
- Expression()     tRPAREN=<RPAREN>{recordToken(tRPAREN);}
-
-
-        tLBRACE=<LBRACE>{recordToken(tLBRACE);}
-
-    ( SwitchCase() )*
-    [ DefaultCase() ]
-    tRBRACE=<RBRACE>{recordToken(tRBRACE);}
+    tLPAREN=<LPAREN>{recordToken(tLPAREN);}
+    expr = Expression()
+    tRPAREN=<RPAREN>{recordToken(tRPAREN);}
+    tLBRACE=<LBRACE>
+    {
+        recordToken(tLBRACE);
+        switchNode = new SwitchNode(expr, t.beginLine, t.beginColumn);
+    }
+    (
+        caseNode = SwitchCase()
+        {switchNode.addCase(caseNode);}
+    )*
+    [
+        defaultNode = DefaultCase()
+        {switchNode.setDefaultCase(defaultNode);}
+    ]
+    tRBRACE=<RBRACE>
+    {
+        recordToken(tRBRACE);
+        return switchNode;
+    }
 }
 
-void SwitchCase() : {Token t,tCOLON;}
+ASTNode SwitchCase() : {
+    Token t, tCOLON, caseValue;
+    CaseNode caseNode;
+    ASTNode value, stmt;
+}
 {
     t=<CASE>
-    {recordToken(t);
+    {
+        recordToken(t);
         System.out.println("      → Case branch");
     }
     (
-        <INTEGER_LITERAL>
-    |   <CHAR_LITERAL>
-    |   <STRING_LITERAL>
-    |   <IDENTIFIER>
+        caseValue = <INTEGER_LITERAL> {value = new LiteralNode("int", caseValue.image, caseValue.beginLine, caseValue.beginColumn);}
+    |   caseValue = <CHAR_LITERAL> {value = new LiteralNode("char", caseValue.image, caseValue.beginLine, caseValue.beginColumn);}
+    |   caseValue = <STRING_LITERAL> {value = new LiteralNode("String", caseValue.image, caseValue.beginLine, caseValue.beginColumn);}
+    |   caseValue = <IDENTIFIER> {value = new IdentifierNode(caseValue.image, caseValue.beginLine, caseValue.beginColumn);}
     )
-    tCOLON=<COLON>{recordToken(tCOLON);}
-    ( LOOKAHEAD(2) Statement() )*
-}
+    tCOLON=<COLON>
+    {
+        recordToken(tCOLON);
+        caseNode = new CaseNode(value, t.beginLine, t.beginColumn);
+    }
+    (
+        LOOKAHEAD(2)
+        stmt = Statement()
+        {caseNode.addStatement(stmt);}
+    )*
+    {
+        return caseNode;
+    }}
 
-void DefaultCase() : {Token t,tCOLON;}
+ASTNode DefaultCase() : {
+    Token t, tCOLON;
+    DefaultCaseNode defaultNode;
+    ASTNode stmt;
+}
 {
     t=<DEFAULt>
-    {recordToken(t);
-        System.out.println("      → Default branch");
-    }
-    tCOLON=<COLON>{recordToken(tCOLON);}
-    ( LOOKAHEAD(2) Statement() )*
-}
-
-
-void Expression() : {}
-{
-{expressionCount++;}
-LogicalOrExpression()
-}
-void LogicalOrExpression(): {
- Token t;}
-{
-LogicalAndExpression()
-    ( t=<OR> {recordToken(t);} LogicalAndExpression() )*
-}
-
-void LogicalAndExpression():{
- Token t;}
-{
- EqualityExpression()
-    ( t=<AND> {recordToken(t);} EqualityExpression() )*
-}
-
-void EqualityExpression():{
- Token t;}
-{
- RelationalExpression()
-    ( (t=<EQ> {recordToken(t);}
-      |t=<NE> {recordToken(t);}) RelationalExpression() )*
-}
-void RelationalExpression():{
- Token t;}
-{
-    AdditiveExpression()
-    ( (t=<LT> {recordToken(t);}
-    | t=<LE> {recordToken(t);}
-    | t=<GT> {recordToken(t);}
-    | t=<GE>{recordToken(t);}) AdditiveExpression() )*
-}
-
-void AdditiveExpression():{
- Token t;}
-{
-MultiplicativeExpression()
-    (
-    (t=<PLUS> {recordToken(t);}
-    |t=<MINUS> {recordToken(t);}) MultiplicativeExpression() )*
-}
-void MultiplicativeExpression() : {
- Token t;}
-{
-    UnaryExpression()
-    ( (t=<MULTIPLY> {recordToken(t);}
-    |  t=<DIVIDE> {recordToken(t);}) UnaryExpression() )*
-}
-
-void UnaryExpression() : {
- Token t;}
-{
-    (t=<NOT> {recordToken(t);}
-    |t=<MINUS> {recordToken(t);}) UnaryExpression()
-|   PrimaryExpression()
-}
-
-void PrimaryExpression() :
-{
-    Token t,tLPAREN,tRPAREN;
-}
-{
-    t = <INTEGER_LITERAL> { recordToken(t); }
-|   t = <LONG_LITERAL> { recordToken(t); }
-|   t = <FLOAT_LITERAL> { recordToken(t); }
-|   t = <DOUBLE_LITERAL> { recordToken(t); }
-|   t = <STRING_LITERAL> { recordToken(t); }
-|   t = <CHAR_LITERAL> { recordToken(t); }
-|   t = <TRUE> { recordToken(t); }
-|   t = <FALSE> { recordToken(t); }
-|   LOOKAHEAD(<IDENTIFIER> <DOT>)
-        MemberAccess()
-|   LOOKAHEAD(<IDENTIFIER> <LPAREN>)
-        MethodCall()
-|   t = <IDENTIFIER>
-
     {
         recordToken(t);
+        System.out.println("      → Default branch");
     }
-|       tLPAREN=<LPAREN>{recordToken(tLPAREN);}
- Expression()     tRPAREN=<RPAREN>{recordToken(tRPAREN);}
-
-}
-void MemberAccess() :
-{
-    Token id;
-}
-{
-    id = <IDENTIFIER>
+    tCOLON=<COLON>
     {
-        recordToken(id);
+        recordToken(tCOLON);
+        defaultNode = new DefaultCaseNode(t.beginLine, t.beginColumn);
     }
     (
-        <DOT> id = <IDENTIFIER>
+        LOOKAHEAD(2)
+        stmt = Statement()
+        {defaultNode.addStatement(stmt);}
+    )*
+    {
+        return defaultNode;
+    }}
+
+
+ASTNode Expression() : {
+    ASTNode node;
+}
+{
+    {expressionCount++;}
+    node = LogicalOrExpression()
+    { return node; }
+}
+ASTNode LogicalOrExpression() : {
+    Token t;
+    ASTNode left, right;
+    }
+    {
+        left = LogicalAndExpression()
+        (
+            t=<OR> {recordToken(t);}
+            right = LogicalAndExpression()
+            { left = new BinaryOpNode("||", left, right, t.beginLine, t.beginColumn); }
+        )*
+        { return left; }
+    }
+
+ASTNode LogicalAndExpression() : {
+        Token t;
+        ASTNode left, right;
+}
+{
+    left = EqualityExpression()
+    (
+        t=<AND> {recordToken(t);}
+        right = EqualityExpression()
+        { left = new BinaryOpNode("&&", left, right, t.beginLine, t.beginColumn); }
+    )*
+    { return left; }
+}
+
+ASTNode EqualityExpression() : {
+    Token t;
+    ASTNode left, right;
+}
+{
+    left = RelationalExpression()
+    (
+        (t=<EQ> {recordToken(t);} | t=<NE> {recordToken(t);})
+        right = RelationalExpression()
+        { left = new BinaryOpNode(t.image, left, right, t.beginLine, t.beginColumn); }
+    )*
+    { return left; }
+}
+ASTNode RelationalExpression() : {
+   Token t;
+   ASTNode left, right;
+}
+{
+    left = AdditiveExpression()
+    (
+        (t=<LT> {recordToken(t);} | t=<LE> {recordToken(t);} | t=<GT> {recordToken(t);} | t=<GE> {recordToken(t);})
+        right = AdditiveExpression()
+        { left = new BinaryOpNode(t.image, left, right, t.beginLine, t.beginColumn); }
+    )*
+    { return left; }
+}
+
+ASTNode AdditiveExpression() : {
+   Token t;
+   ASTNode left, right;
+}
+{
+    left = MultiplicativeExpression()
+    (
+        (t=<PLUS> {recordToken(t);} | t=<MINUS> {recordToken(t);})
+        right = MultiplicativeExpression()
+        { left = new BinaryOpNode(t.image, left, right, t.beginLine, t.beginColumn); }
+    )*
+    { return left; }
+}
+ASTNode MultiplicativeExpression() : {
+   Token t;
+   ASTNode left, right;
+}
+{
+    left = UnaryExpression()
+    (
+        (t=<MULTIPLY> {recordToken(t);} | t=<DIVIDE> {recordToken(t);})
+        right = UnaryExpression()
+        { left = new BinaryOpNode(t.image, left, right, t.beginLine, t.beginColumn); }
+    )*
+    { return left; }
+}
+
+ASTNode UnaryExpression() : {
+    Token t;
+    ASTNode operand;
+}
+{
+    (t=<NOT> {recordToken(t);} | t=<MINUS> {recordToken(t);})
+    operand = UnaryExpression()
+    { return new UnaryOpNode(t.image, operand, true, t.beginLine, t.beginColumn); }
+|   operand = PrimaryExpression()
+    { return operand; }
+}
+ASTNode PostIncrementExpression() : {
+        Token id, tINC;
+}
+{
+        id = <IDENTIFIER> tINC=<INCREMENT>
         {
             recordToken(id);
+            recordToken(tINC);
+            symbolTable.markVariableUsed(id.image);
+            System.out.println("      → Post-increment: " + id.image + "++");
+            return new UnaryOpNode("++", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                                  false, id.beginLine, id.beginColumn);
         }
-        [ <LPAREN> [ ArgumentList() ] <RPAREN> ]
-    )+
 }
 
-void MethodCall() :
-{
-    Token id;
-}
-{
-    id = <IDENTIFIER>
-    {
-        recordToken(id);
-        symbolTable.markVariableUsed(id.image);
-    }
-    <LPAREN>
-    [ ArgumentList() ]
-    <RPAREN>
-}
-void MethodCallStatement() : {}
-{
-    {
-        System.out.println("    → Method call statement");
-    }
-    (
-        LOOKAHEAD(<IDENTIFIER> <DOT>)
-        MemberAccess()
-    |   MethodCall()
-    )
-    <SEMICOLON>
-}
 
-void ArgumentList() : {}
-{
-    Expression() ( <COMMA> Expression() )*
+ASTNode PostDecrementExpression() : {
+    Token id, tDEC;
 }
+    {
+        id = <IDENTIFIER> tDEC=<DECREMENT>
+        {
+            recordToken(id);
+            recordToken(tDEC);
+            symbolTable.markVariableUsed(id.image);
+            System.out.println("      → Post-decrement: " + id.image + "--");
+            return new UnaryOpNode("--", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                                  false, id.beginLine, id.beginColumn);
+        }
+    }
+
+ASTNode PreIncrementExpression() : {
+    Token tINC, id;
+}
+    {
+        tINC=<INCREMENT> id = <IDENTIFIER>
+        {
+            recordToken(tINC);
+            recordToken(id);
+            symbolTable.markVariableUsed(id.image);
+            System.out.println("      → Pre-increment: ++" + id.image);
+            return new UnaryOpNode("++", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                                  true, id.beginLine, id.beginColumn);
+        }
+    }
+
+ASTNode PreDecrementExpression() : {
+    Token tDEC, id;
+}
+    {
+        tDEC=<DECREMENT> id = <IDENTIFIER>
+        {
+            recordToken(tDEC);
+            recordToken(id);
+            symbolTable.markVariableUsed(id.image);
+            System.out.println("      → Pre-decrement: --" + id.image);
+            return new UnaryOpNode("--", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                                  true, id.beginLine, id.beginColumn);
+        }
+    }
+
+ASTNode PrimaryExpression() : {
+    Token t, tLPAREN, tRPAREN;
+    ASTNode node;
+}
+    {
+        t = <INTEGER_LITERAL>
+        {
+            recordToken(t);
+            return new LiteralNode("int", t.image, t.beginLine, t.beginColumn);
+        }
+    |   t = <LONG_LITERAL>
+        {
+            recordToken(t);
+            return new LiteralNode("long", t.image, t.beginLine, t.beginColumn);
+        }
+    |   t = <FLOAT_LITERAL>
+        {
+            recordToken(t);
+            return new LiteralNode("float", t.image, t.beginLine, t.beginColumn);
+        }
+    |   t = <DOUBLE_LITERAL>
+        {
+            recordToken(t);
+            return new LiteralNode("double", t.image, t.beginLine, t.beginColumn);
+        }
+    |   t = <STRING_LITERAL>
+        {
+            recordToken(t);
+            return new LiteralNode("String", t.image, t.beginLine, t.beginColumn);
+        }
+    |   t = <CHAR_LITERAL>
+        {
+            recordToken(t);
+            return new LiteralNode("char", t.image, t.beginLine, t.beginColumn);
+        }
+    |   t = <TRUE>
+        {
+            recordToken(t);
+            return new LiteralNode("boolean", "true", t.beginLine, t.beginColumn);
+        }
+    |   t = <FALSE>
+        {
+            recordToken(t);
+            return new LiteralNode("boolean", "false", t.beginLine, t.beginColumn);
+        }
+    |   LOOKAHEAD(<IDENTIFIER> <DOT>)
+        node = MemberAccess()
+        { return node; }
+    |   LOOKAHEAD(<IDENTIFIER> <LPAREN>)
+        node = MethodCall()
+        { return node; }
+    |   t = <IDENTIFIER>
+        {
+            recordToken(t);
+            return new IdentifierNode(t.image, t.beginLine, t.beginColumn);
+        }
+    |   tLPAREN=<LPAREN> {recordToken(tLPAREN);}
+        node = Expression()
+        tRPAREN=<RPAREN>
+        {recordToken(tRPAREN);
+         return node;
+        }
+
+    }
+ASTNode MemberAccess() : {
+        Token id, tDot, tLPAREN, tRPAREN;
+        MemberAccessNode memberNode;
+        List<ASTNode> args = new ArrayList<ASTNode>();
+        ASTNode arg;
+}
+    {
+        id = <IDENTIFIER>
+        {
+            recordToken(id);
+            memberNode = new MemberAccessNode(id.beginLine, id.beginColumn);
+            memberNode.addMember(id.image);
+        }
+        (
+            tDot=<DOT> {recordToken(tDot);}
+            id = <IDENTIFIER>
+            {
+                recordToken(id);
+                memberNode.addMember(id.image);
+            }
+            [
+                tLPAREN=<LPAREN> {recordToken(tLPAREN);}
+                [
+                    arg = Expression() {args.add(arg);}
+                    (<COMMA> arg = Expression() {args.add(arg);})*
+                ]
+                tRPAREN=<RPAREN>
+                {
+                    recordToken(tRPAREN);
+                    MethodCallNode methodCall = new MethodCallNode(id.image, id.beginLine, id.beginColumn);
+                    methodCall.setArguments(args);
+                    memberNode.setMethodCall(methodCall);
+                }
+            ]
+        )+
+        { return memberNode; }
+    }
+
+ASTNode MethodCall() : {
+        Token id, tLPAREN, tRPAREN;
+        MethodCallNode methodCall;
+        List<ASTNode> args = new ArrayList<ASTNode>();
+        ASTNode arg;
+    }
+    {
+        id = <IDENTIFIER>
+        {
+            recordToken(id);
+            symbolTable.markVariableUsed(id.image);
+            methodCall = new MethodCallNode(id.image, id.beginLine, id.beginColumn);
+        }
+        tLPAREN=<LPAREN> {recordToken(tLPAREN);}
+        [
+            arg = Expression() {args.add(arg);}
+            (<COMMA> arg = Expression() {args.add(arg);})*
+        ]
+        tRPAREN=<RPAREN>
+        {
+            recordToken(tRPAREN);
+            methodCall.setArguments(args);
+            return methodCall;
+        }
+    }
+
+

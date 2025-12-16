@@ -59,7 +59,9 @@ public class SymbolTable {
     }
 
     // ==================== VARIABLE MANAGEMENT ====================
-
+    public boolean isVariableDeclared(String name) {
+        return variables.containsKey(name);
+    }
     /**
      * Add a variable to the symbol table
      */
