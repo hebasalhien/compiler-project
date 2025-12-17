@@ -19,7 +19,7 @@ public class JavaParser {
             if (name.equals("\"<\"") || name.equals("\">\"") || name.equals("\"<=\"") || name.equals("\">=\"")) {
                 return "Operator";  // Keep the operator as is (without any cleaning)
             }
-        name = name.replace("\"", "").replace("<","").replace(">","");
+        name = name.replace("\"", "").replace("<","").replace(">","") ;
 
         // Map to token type names
     switch (name) {
@@ -37,14 +37,35 @@ public class JavaParser {
 
             case "(": case ")": case "{": case "}": case "[":
             case "]": case ";": case ",": case ".": case ":":
-                return "Delimiters";
+                return "Special character";
+
+            case "SINGLE_LINE_COMMENT":
+            case "MULTI_LINE_COMMENT":
+                return "Comment";
+
+            case "STRING_LITERAL":
+            case "CHAR_LITERAL":
+                return "Character Constant";
+
+            case "INTEGER_LITERAL":
+            case "LONG_LITERAL":
+            case "FLOAT_LITERAL":
+            case "DOUBLE_LITERAL":
+                return "Numeric Constant";
 
             default:
                 return name;
         }
     }
-
+    private void recordSpecialTokens(Token t) {
+        Token special = t.specialToken;
+        while (special != null) {
+            symbolTable.addToken(special, "Comment");
+            special = special.specialToken;
+        }
+    }
     private void recordToken(Token t) {
+        recordSpecialTokens(t);
         symbolTable.addToken(t, getTokenName(t));
     }
 
@@ -95,6 +116,11 @@ public class JavaParser {
                     ast.printTree("",true);
                     System.out.println();
                     // Check for unused variables
+                    System.out.println("========================================");
+                    TypeChecker typeChecker = new TypeChecker(parser.symbolTable);
+                    typeChecker.analyze(ast);
+                    typeChecker.printResults();
+                    System.out.println();
                     java.util.List<String> unused = parser.getUnusedVariables();
                     if (!unused.isEmpty()) {
                         System.out.println("========================================");
@@ -183,11 +209,10 @@ SKIP : {
   " " | "\t" | "\n" | "\r" | "\f"
 }
 
-SKIP : {
+SPECIAL_TOKEN : {
   <SINGLE_LINE_COMMENT: "//" (~["\n","\r"])* ("\n"|"\r"|"\r\n")?>
 | <MULTI_LINE_COMMENT: "/*" (~["*"])* "*" ("*" | (~["*","/"] (~["*"])* "*"))* "/">
 }
-
 /* ==================TOKENS============*/
 
 TOKEN : {

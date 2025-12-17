@@ -40,20 +40,27 @@ public class SymbolTable {
     public List<TokenEntry> getTokens() {
         return tokens;
     }
-
+    private String normalize(String text) {
+        return text
+                .replace("\r\n", " ")
+                .replace("\n", " ")
+                .replace("\r", " ")
+                .replace("\t", " ")
+                .trim();
+    }
     /**
      * Print symbol table in formatted style
      */
     public void printSymbolTable() {
         System.out.println("\n========== SYMBOL TABLE ==========");
         System.out.println();
-        System.out.println(String.format("%-15s %-10s %-10s %-10s %-10s",
+        System.out.println(String.format("%-15s %-10s %-8s %-10s %-10s",
                 "NAME", "TYPE", "SCOPE", "LINE", "COLUMN"));
         System.out.println("----------------------------------------------------------------------");
         int count = 1;
         for (TokenEntry entry : tokens) {
             System.out.printf("│ %-4d │ %-19s │ %-22s │ %4d │ %6d │%n",
-                    count++, entry.type, entry.lexeme, entry.line, entry.column);
+                    count++, entry.type, normalize(entry.lexeme), entry.line, entry.column);
         }
 
         System.out.println("└──────┴─────────────────────┴────────────────────────┴──────┴────────┘");
@@ -61,9 +68,8 @@ public class SymbolTable {
 
     // ==================== VARIABLE MANAGEMENT ====================
     public boolean isVariableDeclared(String name) {
-        return variables.containsKey(name);
-    }
-    /**
+        return lookupVariable(name) != null;
+    }    /**
      * Add a variable to the symbol table
      */
     public void addVariable(String name, String type, int line) {
@@ -80,14 +86,7 @@ public class SymbolTable {
             info.used = true;
         }
     }
-    public String getVariableType(String name) {
-        if (!variables.containsKey(name)) {
-            throw new RuntimeException(
-                    "Semantic Error: Variable '" + name + "' not declared"
-            );
-        }
-        return variables.get(name).type;
-    }
+
     /**
      * Lookup a variable in current and parent scopes
      */
