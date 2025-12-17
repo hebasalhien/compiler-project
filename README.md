@@ -7,9 +7,7 @@ You can execute the full workflow in sequence:
 cd src/parser 
 # Generate parser using JavaCC
 javacc JavaParser.jj 
-# Return to project root
-cd ../.. 
 # Compile source files
-javac src/parser/*.java src/Main.java 
+javac *.java
 # Run the program with input file
-java -cp src Main input/valid.txt
+java parser.JavaParser D:\java\compiler\input\valid.txt
