@@ -6,18 +6,12 @@ options {
 PARSER_BEGIN(JavaParser)
 package parser;
 import parser.SymbolTable;import java.util.*;
+import java.io.*;
 import parser.ASTNode;
 
 public class JavaParser {
     // Use external parser.SymbolTable class
     private SymbolTable symbolTable = new SymbolTable();
-
-    // Statistics for Phase 2
-    private int classCount = 0;
-    private int methodCount = 0;
-    private int fieldCount = 0;
-    private int statementCount = 0;
-    private int expressionCount = 0;
 
     // Helper method to get clean token name
     private String getTokenName(Token token) {
@@ -34,6 +28,7 @@ public class JavaParser {
             case "double": case "float": case "long": case "short": case "byte":
             case "char": case "boolean": case "if": case "else": case "while": case "do":
             case "for": case "return": case "break": case "continue": case "true": case "false":
+            case "switch": case "case" : case "default":
                 return "Keyword";
 
             case "=": case "+": case "-": case "*": case "/": case "%": case "==": case "!=": case "<":
@@ -41,7 +36,7 @@ public class JavaParser {
                 return "Operator";
 
             case "(": case ")": case "{": case "}": case "[":
-            case "]": case ";": case ",": case ".":
+            case "]": case ";": case ",": case ".": case ":":
                 return "Delimiters";
 
             default:
@@ -57,24 +52,126 @@ public class JavaParser {
         symbolTable.printSymbolTable();
     }
 
-    public void printVariables() {
-        symbolTable.printVariables();
-    }
-
-    public void printStatistics() {
-        System.out.println("\n========================================");
-        System.out.println("PARSING STATISTICS");
-        System.out.println("========================================");
-        System.out.println("Classes found:      " + classCount);
-        System.out.println("Methods found:      " + methodCount);
-        System.out.println("Fields found:       " + fieldCount);
-        System.out.println("Statements found:   " + statementCount);
-        System.out.println("Expressions found:  " + expressionCount);
-    }
-
     public List<String> getUnusedVariables() {
         return symbolTable.getUnusedVariables();
         }
+            public static void main(String[] args) {
+                // Check if filename argument is provided
+
+                if (args.length < 1) {
+                    System.err.println("Usage: java Main <input_file.java>");
+                    System.exit(1);
+                }
+
+                String filename = args[0];
+
+                try {
+
+                    System.out.println("Input file: " + filename);
+                    System.out.println();
+
+                    // Create parser with input file
+                    FileInputStream fis = new FileInputStream(filename);
+                    JavaParser parser = new JavaParser(fis);
+
+                    ASTNode ast = parser.Program();
+
+                    System.out.println();
+                    System.out.println("SYNTAX VALIDATION SUCCESSFUL!");
+                    System.out.println();
+
+
+
+                    // Display symbol table (Phase 1)
+
+                    parser.printSymbolTable();
+                    System.out.println();
+
+                    // Display AST (Phase 3)
+                    System.out.println("========================================");
+                    System.out.println("ABSTRACT SYNTAX TREE (AST)");
+                    System.out.println("========================================");
+                    ast.print(0);
+                    ast.printTree("",true);
+                    System.out.println();
+                    // Check for unused variables
+                    java.util.List<String> unused = parser.getUnusedVariables();
+                    if (!unused.isEmpty()) {
+                        System.out.println("========================================");
+                        System.out.println("WARNINGS: UNUSED VARIABLES");
+                        System.out.println("========================================");
+                        for (String var : unused) {
+                            System.out.println(" -> " + var);
+                        }
+                        System.out.println();
+                    }
+
+                    // Close the input stream
+                    fis.close();
+
+                    // Summary
+
+                    System.out.println("Phase 1 (Lexical Analysis): Complete");
+                    System.out.println("Phase 2 (Syntax Analysis): Complete");
+                    System.out.println("No syntax errors detected");
+                    System.out.println();
+
+                } catch (FileNotFoundException e) {
+                    System.err.println("✗ ERROR: File '" + filename + "' not found.");
+                    System.exit(1);
+
+                } catch (ParseException e) {
+                    // Handle syntax errors
+                    System.err.println();
+                    System.err.println("╔════════════════════════════════════════╗");
+                    System.err.println("║    SYNTAX ERROR DETECTED               ║");
+                    System.err.println("╚════════════════════════════════════════╝");
+                    System.err.println();
+                    System.err.println("Location: Line " + e.currentToken.next.beginLine +
+                            ", Column " + e.currentToken.next.beginColumn);
+                    System.err.println();
+
+                    // Display error message
+                    System.err.println("Error Message:");
+                    System.err.println("  " + e.getMessage());
+                    System.err.println();
+
+                    // Try to provide more helpful context
+                    if (e.currentToken != null && e.currentToken.next != null) {
+                        System.err.println("Unexpected token: \"" + e.currentToken.next.image + "\"");
+                        System.err.println();
+                    }
+
+                    System.exit(1);
+
+                } catch (TokenMgrError e) {
+                    // Handle lexical errors (invalid tokens)
+                    System.err.println();
+                    System.err.println("╔════════════════════════════════════════╗");
+                    System.err.println("║   ✗ LEXICAL ERROR DETECTED             ║");
+                    System.err.println("╚════════════════════════════════════════╝");
+                    System.err.println();
+                    System.err.println("Invalid token or character encountered");
+                    System.err.println();
+                    System.err.println("Error Message:");
+                    System.err.println("  " + e.getMessage());
+                    System.err.println();
+                    System.exit(1);
+
+                } catch (IOException e) {
+                    System.err.println("✗ ERROR: Could not read file: " + e.getMessage());
+                    System.exit(1);
+
+                }catch ( RuntimeException e)
+                {
+                    System.err.println(e.getMessage());
+                    System.exit(1);
+                }catch (Exception e) {
+                    System.err.println("✗ UNEXPECTED ERROR: " + e.getMessage());
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+            }
 
 }
 
@@ -146,7 +243,7 @@ ASTNode Program():{
 classDecl= ClassDeclaration()
    { program.addClass(classDecl); }
 <EOF>
-{System.out.println("-> Program Structure validate.");
+{
 return program;
 }
 }
@@ -163,14 +260,8 @@ ASTNode ClassDeclaration():{
     {
 recordToken(tCLASS);
 recordToken(className);
-classCount++;
         classNode = new ClassNode(className.image,modifiers, className.beginLine, className.beginColumn);
-
- if (!modifiers.isEmpty()) {
-            System.out.println("→ Found class: " + modifiers + " " + className.image);
-        } else {
-            System.out.println("→ Found class: " + className.image);
-        } }
+ }
 tLBRACE=<LBRACE>{recordToken(tLBRACE);}
 (member=MemberDeclaration()
 {classNode.addMember(member);})*
@@ -215,18 +306,12 @@ ASTNode FieldDeclaration():{
                                                         isArray = true;
                                                         }]
          id = <IDENTIFIER>  tSEMICOLON=<SEMICOLON>
-        {
-fieldCount++;
-recordToken(type);
-recordToken(id);
-recordToken(tSEMICOLON);
-symbolTable.addVariable(id.image,type.image,id.beginLine);
- if (!modifiers.isEmpty()) {
-            System.out.println("  → Field: " + modifiers + " " + type.image + " " + id.image);
-        } else {
-            System.out.println("  → Field: " + type.image + " " + id.image);
-        }
-        return new FieldNode(modifiers, type.image, id.image, isArray, id.beginLine, id.beginColumn);
+{
+    recordToken(type);
+    recordToken(id);
+    recordToken(tSEMICOLON);
+    symbolTable.addVariable(id.image,type.image,id.beginLine);
+    return new FieldNode(modifiers, type.image, id.image, isArray, id.beginLine, id.beginColumn);
 
 }
         }
@@ -248,14 +333,10 @@ Token returnType,methodName,tRBRACE,tLBRACE,tLPAREN,tRPAREN;
     methodName = <IDENTIFIER>
  {
         recordToken(methodName);
-        methodCount++;
+
         methodNode = new MethodNode(modifiers, returnType.image, methodName.image,
                                             methodName.beginLine, methodName.beginColumn);
-     if (!modifiers.isEmpty()) {
-                System.out.println("  → Method: " + modifiers + " " + returnType.image + " " + methodName.image + "()");
-     } else {
-                System.out.println("  → Method: " + returnType.image + " " + methodName.image + "()");
-     }
+
  }
     tLPAREN=<LPAREN>{recordToken(tLPAREN);}
     [param = Parameter() {params.add(param);} (<COMMA> param = Parameter() {params.add(param);})*]
@@ -287,7 +368,6 @@ ASTNode Parameter():{
 
         recordToken(id);
         symbolTable.addVariable(id.image,type.image,id.beginLine);
-        System.out.println("  → Parameter: " + type.image + " " + id.image);
         return new ParameterNode(type.image, id.image, isArray, id.beginLine, id.beginColumn);
 
  }
@@ -318,7 +398,6 @@ String Modifiers() :
 ASTNode Statement():{
  ASTNode node;}
 {
-    {statementCount++;}
     (
             node = IfStatement()
         |   node = ForStatement()
@@ -343,9 +422,6 @@ ASTNode StatementExpression() : {
      Token tSEMICOLON;
  }
 {
-    {
-        System.out.println("    → Expression statement");
-    }
     (
         LOOKAHEAD(<IDENTIFIER> <DOT>)
         node = MemberAccess()
@@ -384,7 +460,7 @@ ASTNode VariableDeclaration():{
         {
          recordToken(id);
          symbolTable.addVariable(id.image, type.image, id.beginLine);
-         System.out.println("  → Variable declared: " + type.image + " " + id.image); }
+}
     [tAssign = <ASSIGN> {recordToken(tAssign);} initializer = Expression()]
         tSEMICOLON=<SEMICOLON>
         {recordToken(tSEMICOLON);
@@ -409,7 +485,7 @@ ASTNode AssignmentStatement():{
                  } else {
                      symbolTable.markVariableUsed(id.image);
                  }
-         System.out.println("  → Assignment to: " + id.image); }
+}
          expr=Expression()
          tSEMICOLON=<SEMICOLON>
         {
@@ -426,7 +502,6 @@ ASTNode IfStatement():{
 tIf=<IF>
 {
     recordToken(tIf);
-    System.out.println("  → If statement found");
 }
     tLPAREN=<LPAREN>{recordToken(tLPAREN);}
     condition = Expression()
@@ -447,7 +522,6 @@ ASTNode WhileStatement():{
     t=<WHILE>
     {
          recordToken(t);
-         System.out.println("  → while loop found");
     }
     tLPAREN=<LPAREN>{recordToken(tLPAREN);}
     condition = Expression()
@@ -465,7 +539,6 @@ ASTNode DoWhileStatement():{
     tDo=<DO>
     {
         recordToken(tDo);
-        System.out.println("  → Do while loop found");
     }
     body = Statement()
     tWhile=<WHILE>{recordToken(tWhile);}
@@ -487,7 +560,7 @@ ASTNode ForStatement(): {
     t=<FOR>
     {
      recordToken(t);
-     System.out.println("  → for loop found"); }
+}
      tLPAREN=<LPAREN>{recordToken(tLPAREN);}
 
      [init = ForInit()]
@@ -634,7 +707,7 @@ ASTNode ReturnStatement():{
     t=<RETURN>
     {
         recordToken(t);
-        System.out.println("  → return statement found"); }
+}
 
     expr = Expression()
     tSEMICOLON=<SEMICOLON>
@@ -691,7 +764,6 @@ ASTNode SwitchStatement() : {
     t=<SWITCH>
     {
         recordToken(t);
-        System.out.println("    → Switch statement");
     }
     tLPAREN=<LPAREN>{recordToken(tLPAREN);}
     expr = Expression()
@@ -725,7 +797,6 @@ ASTNode SwitchCase() : {
     t=<CASE>
     {
         recordToken(t);
-        System.out.println("      → Case branch");
     }
     (
         caseValue = <INTEGER_LITERAL> {value = new LiteralNode("int", caseValue.image, caseValue.beginLine, caseValue.beginColumn);}
@@ -738,8 +809,8 @@ ASTNode SwitchCase() : {
         recordToken(tCOLON);
         caseNode = new CaseNode(value, t.beginLine, t.beginColumn);
     }
-    (
-        LOOKAHEAD(2)
+     (
+        LOOKAHEAD({ getToken(1).kind != CASE && getToken(1).kind != DEFAULt && getToken(1).kind != RBRACE })
         stmt = Statement()
         {caseNode.addStatement(stmt);}
     )*
@@ -756,7 +827,6 @@ ASTNode DefaultCase() : {
     t=<DEFAULt>
     {
         recordToken(t);
-        System.out.println("      → Default branch");
     }
     tCOLON=<COLON>
     {
@@ -764,7 +834,7 @@ ASTNode DefaultCase() : {
         defaultNode = new DefaultCaseNode(t.beginLine, t.beginColumn);
     }
     (
-        LOOKAHEAD(2)
+        LOOKAHEAD({ getToken(1).kind != RBRACE })
         stmt = Statement()
         {defaultNode.addStatement(stmt);}
     )*
@@ -777,7 +847,6 @@ ASTNode Expression() : {
     ASTNode node;
 }
 {
-    {expressionCount++;}
     node = LogicalOrExpression()
     { return node; }
 }
@@ -883,7 +952,6 @@ ASTNode PostIncrementExpression() : {
             recordToken(id);
             recordToken(tINC);
             symbolTable.markVariableUsed(id.image);
-            System.out.println("      → Post-increment: " + id.image + "++");
             return new UnaryOpNode("++", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
                                   false, id.beginLine, id.beginColumn);
         }
@@ -899,7 +967,6 @@ ASTNode PostDecrementExpression() : {
             recordToken(id);
             recordToken(tDEC);
             symbolTable.markVariableUsed(id.image);
-            System.out.println("      → Post-decrement: " + id.image + "--");
             return new UnaryOpNode("--", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
                                   false, id.beginLine, id.beginColumn);
         }
@@ -914,7 +981,6 @@ ASTNode PreIncrementExpression() : {
             recordToken(tINC);
             recordToken(id);
             symbolTable.markVariableUsed(id.image);
-            System.out.println("      → Pre-increment: ++" + id.image);
             return new UnaryOpNode("++", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
                                   true, id.beginLine, id.beginColumn);
         }
@@ -929,7 +995,6 @@ ASTNode PreDecrementExpression() : {
             recordToken(tDEC);
             recordToken(id);
             symbolTable.markVariableUsed(id.image);
-            System.out.println("      → Pre-decrement: --" + id.image);
             return new UnaryOpNode("--", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
                                   true, id.beginLine, id.beginColumn);
         }
@@ -943,41 +1008,49 @@ ASTNode PrimaryExpression() : {
         t = <INTEGER_LITERAL>
         {
             recordToken(t);
+            symbolTable.markVariableUsed(t.image);
             return new LiteralNode("int", t.image, t.beginLine, t.beginColumn);
         }
     |   t = <LONG_LITERAL>
         {
             recordToken(t);
+            symbolTable.markVariableUsed(t.image);
             return new LiteralNode("long", t.image, t.beginLine, t.beginColumn);
         }
     |   t = <FLOAT_LITERAL>
         {
             recordToken(t);
+            symbolTable.markVariableUsed(t.image);
             return new LiteralNode("float", t.image, t.beginLine, t.beginColumn);
         }
     |   t = <DOUBLE_LITERAL>
         {
             recordToken(t);
+            symbolTable.markVariableUsed(t.image);
             return new LiteralNode("double", t.image, t.beginLine, t.beginColumn);
         }
     |   t = <STRING_LITERAL>
         {
             recordToken(t);
+            symbolTable.markVariableUsed(t.image);
             return new LiteralNode("String", t.image, t.beginLine, t.beginColumn);
         }
     |   t = <CHAR_LITERAL>
         {
             recordToken(t);
+            symbolTable.markVariableUsed(t.image);
             return new LiteralNode("char", t.image, t.beginLine, t.beginColumn);
         }
     |   t = <TRUE>
         {
             recordToken(t);
+            symbolTable.markVariableUsed(t.image);
             return new LiteralNode("boolean", "true", t.beginLine, t.beginColumn);
         }
     |   t = <FALSE>
         {
             recordToken(t);
+            symbolTable.markVariableUsed(t.image);
             return new LiteralNode("boolean", "false", t.beginLine, t.beginColumn);
         }
     |   LOOKAHEAD(<IDENTIFIER> <DOT>)
@@ -989,6 +1062,7 @@ ASTNode PrimaryExpression() : {
     |   t = <IDENTIFIER>
         {
             recordToken(t);
+            symbolTable.markVariableUsed(t.image);
             return new IdentifierNode(t.image, t.beginLine, t.beginColumn);
         }
     |   tLPAREN=<LPAREN> {recordToken(tLPAREN);}
@@ -1062,5 +1136,3 @@ ASTNode MethodCall() : {
             return methodCall;
         }
     }
-
-

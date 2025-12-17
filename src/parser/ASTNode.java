@@ -85,7 +85,11 @@ class ClassNode extends ASTNode {
 
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "ClassDeclaration: " + name);
+        if (modifiers != null && !modifiers.isEmpty()) {
+            tree(prefix, isLast, "ClassDeclaration: " +modifiers+" " +name+ " [Line " + line + "]");
+        } else {
+            tree(prefix, isLast, "ClassDeclaration: " + name+ " [Line " + line + "]");
+        }
         String p = prefix + (isLast ? "    " : "│   ");
         for (int i = 0; i < members.size(); i++) {
             members.get(i).printTree(p, i == members.size() - 1);
@@ -143,8 +147,11 @@ class MethodNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "MethodDeclaration: " + returnType + " " + name);
-        String p = prefix + (isLast ? "    " : "│   ");
+        if (modifiers != null && !modifiers.isEmpty()) {
+            tree(prefix,isLast,"MethodDeclaration: " + modifiers + " " + returnType + " " + name + " [Line " + line + "]");
+        } else {
+            tree(prefix,isLast,"MethodDeclaration: " + returnType + " " + name + " [Line " + line + "]");
+        }        String p = prefix + (isLast ? "    " : "│   ");
 
         if (!parameters.isEmpty()) {
             tree(p, false, "Parameters");
@@ -216,7 +223,7 @@ class FieldNode extends ASTNode {
     @Override
     public void printTree(String prefix, boolean isLast) {
         String arr = isArray ? "[]" : "";
-        tree(prefix, isLast, "Field: " + type + arr + " " + name);
+        tree(prefix, isLast, "Field: " + type + arr + " " + name + " [Line " + line + "]");
     }
 }
 class VariableDeclarationNode extends ASTNode{
@@ -247,7 +254,7 @@ class VariableDeclarationNode extends ASTNode{
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "VariableDeclaration: " + type + " " + name);
+        tree(prefix, isLast, "VariableDeclaration: " + type + " " + name+ " [Line " + line + "]");
         if (initializer != null) {
             initializer.printTree(prefix + (isLast ? "    " : "│   "), true);
         }
@@ -276,7 +283,7 @@ class AssignmentNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "Assignment: " + variableName);
+        tree(prefix, isLast, "Assignment: " + variableName+ " [Line " + line + "]");
         if (expression != null) {
             expression.printTree(prefix + (isLast ? "    " : "│   "), true);
         }
@@ -316,7 +323,7 @@ class IfNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "IfStatement");
+        tree(prefix, isLast, "IfStatement [line "+line+ " ]");
         String p = prefix + (isLast ? "    " : "│   ");
 
         tree(p, false, "Condition");
@@ -357,7 +364,7 @@ class WhileNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "WhileLoop");
+        tree(prefix, isLast, "WhileLoop [Line " + line + "]");
         String p = prefix + (isLast ? "    " : "│   ");
 
         tree(p, false, "Condition");
@@ -394,7 +401,7 @@ class DoWhileNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "DoWhileLoop");
+        tree(prefix, isLast, "DoWhileLoop [Line " + line + "]");
         String p = prefix + (isLast ? "    " : "│   ");
 
         tree(p, false, "Body");
@@ -448,7 +455,7 @@ class ForNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "ForLoop");
+        tree(prefix, isLast, "ForLoop [Line " + line + "]");
         String p = prefix + (isLast ? "    " : "│   ");
 
         if (init != null) init.printTree(p, false);
@@ -497,7 +504,7 @@ class SwitchNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "SwitchStatement");
+        tree(prefix, isLast, "SwitchStatement [Line " + line + "]");
         String p = prefix + (isLast ? "    " : "│   ");
 
         expression.printTree(p, false);
@@ -539,7 +546,7 @@ class CaseNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "Case");
+        tree(prefix, isLast, "Case [Line " + line + "]");
         value.printTree(prefix + "    ", false);
         for (ASTNode s : statements) s.printTree(prefix + "    ", true);
     }
@@ -572,7 +579,7 @@ class DefaultCaseNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "Default");
+        tree(prefix, isLast, "Default [Line " + line + "]");
         for (ASTNode s : statements) s.printTree(prefix + "    ", true);
     }
 }
@@ -597,7 +604,7 @@ class ReturnNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "ReturnStatement");
+        tree(prefix, isLast, "ReturnStatement [Line " + line + "]");
         if (expression != null)
             expression.printTree(prefix + "    ", true);
     }
@@ -616,7 +623,7 @@ class BreakNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "BreakStatement");
+        tree(prefix, isLast, "BreakStatement [Line " + line + "]");
     }
 }
 
@@ -633,7 +640,7 @@ class ContinueNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "ContinueStatement");
+        tree(prefix, isLast, "ContinueStatement [Line " + line + "]");
     }
 }
 
@@ -722,7 +729,7 @@ class UnaryOpNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "UnaryOp: " + operator);
+        tree(prefix, isLast, "UnaryOp: " + operator+  "[Line " + line + "]");
         operand.printTree(prefix + "    ", true);
     }
 }
@@ -745,7 +752,7 @@ class LiteralNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "Literal: " + value);
+        tree(prefix, isLast, "Literal: " +type+ " = "+ value);
     }
 }
 
@@ -801,7 +808,7 @@ class MethodCallNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "MethodCall: " + methodName);
+        tree(prefix, isLast, "MethodCall: " + methodName+ " [Line " + line + "]");
         for (ASTNode a : arguments)
             a.printTree(prefix + "    ", true);
     }
@@ -835,7 +842,9 @@ class MemberAccessNode extends ASTNode {
     }
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "MemberAccess: " + String.join(".", members));
-
+        tree(prefix, isLast, "MemberAccess: " + String.join(".", members)+ " [Line " + line + "]");
+        if (methodCall != null) {
+            methodCall.printTree(prefix,isLast);
+        }
     }
 }

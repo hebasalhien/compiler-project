@@ -45,17 +45,18 @@ public class SymbolTable {
      * Print symbol table in formatted style
      */
     public void printSymbolTable() {
-        System.out.println("┌──────┬─────────────────────┬──────────────┬──────┬────────┐");
-        System.out.println("│ No.  │ Token Type          │ Lexeme       │ Line │ Column │");
-        System.out.println("├──────┼─────────────────────┼──────────────┼──────┼────────┤");
-
+        System.out.println("\n========== SYMBOL TABLE ==========");
+        System.out.println();
+        System.out.println(String.format("%-15s %-10s %-10s %-10s %-10s",
+                "NAME", "TYPE", "SCOPE", "LINE", "COLUMN"));
+        System.out.println("----------------------------------------------------------------------");
         int count = 1;
         for (TokenEntry entry : tokens) {
-            System.out.printf("│ %-4d │ %-19s │ %-12s │ %4d │ %6d │%n",
+            System.out.printf("│ %-4d │ %-19s │ %-22s │ %4d │ %6d │%n",
                     count++, entry.type, entry.lexeme, entry.line, entry.column);
         }
 
-        System.out.println("└──────┴─────────────────────┴──────────────┴──────┴────────┘");
+        System.out.println("└──────┴─────────────────────┴────────────────────────┴──────┴────────┘");
     }
 
     // ==================== VARIABLE MANAGEMENT ====================
@@ -79,7 +80,14 @@ public class SymbolTable {
             info.used = true;
         }
     }
-
+    public String getVariableType(String name) {
+        if (!variables.containsKey(name)) {
+            throw new RuntimeException(
+                    "Semantic Error: Variable '" + name + "' not declared"
+            );
+        }
+        return variables.get(name).type;
+    }
     /**
      * Lookup a variable in current and parent scopes
      */
@@ -99,13 +107,6 @@ public class SymbolTable {
      */
     public boolean existsInCurrentScope(String name) {
         return scopeStack.peek().containsKey(name);
-    }
-
-    /**
-     * Get all variables (for unused variable detection)
-     */
-    public Collection<VariableInfo> getAllVariables() {
-        return variables.values();
     }
 
     // ==================== SCOPE MANAGEMENT ====================
@@ -147,23 +148,6 @@ public class SymbolTable {
         }
         return unused;
     }
-
-    /**
-     * Print variable information
-     */
-    public void printVariables() {
-        System.out.println("\n┌─────────────────┬──────────┬──────┬──────┐");
-        System.out.println("│ Variable Name   │ Type     │ Line │ Used │");
-        System.out.println("├─────────────────┼──────────┼──────┼──────┤");
-
-        for (VariableInfo info : variables.values()) {
-            System.out.printf("│ %-15s │ %-8s │ %4d │ %-4s │%n",
-                    info.name, info.type, info.line, info.used ? "Yes" : "No");
-        }
-
-        System.out.println("└─────────────────┴──────────┴──────┴──────┘");
-    }
-
     /**
      * Clear all data
      */
