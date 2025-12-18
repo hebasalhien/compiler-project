@@ -7,7 +7,7 @@ import java.util.*;
  * Performs type checking for expressions and variable assignments
  */
 public class TypeChecker {
-
+    private Map<String, Map<String, String>> methodLocalVariables; // methodName -> (varName -> type)
     private SymbolTable symbolTable;
     private List<String> errors;
     private List<String> warnings;
@@ -31,11 +31,46 @@ public class TypeChecker {
         // String (no implicit conversion)
         COMPATIBLE_TYPES.put("String", new HashSet<>(Arrays.asList("String")));
     }
+    private Map<String, MethodSignature> methodSignatures;
 
+    // NEW: Current method context for return type checking
+    private String currentMethodName = null;
+    private String currentMethodReturnType = null;
+
+    // NEW: Method signature class
+    public static class MethodSignature {
+        String name;
+        String returnType;
+        List<Parameter> parameters;
+        int line;
+
+        public MethodSignature(String name, String returnType, List<Parameter> parameters, int line) {
+            this.name = name;
+            this.returnType = returnType;
+            this.parameters = parameters != null ? parameters : new ArrayList<>();
+            this.line = line;
+        }
+    }
+
+    // NEW: Parameter class
+    public static class Parameter {
+        String name;
+        String type;
+        boolean isArray;
+
+        public Parameter(String name, String type, boolean isArray) {
+            this.name = name;
+            this.type = type;
+            this.isArray = isArray;
+        }
+    }
     public TypeChecker(SymbolTable symbolTable) {
         this.symbolTable = symbolTable;
         this.errors = new ArrayList<>();
         this.warnings = new ArrayList<>();
+        this.methodSignatures = new HashMap<>();
+        this.methodLocalVariables = new HashMap<>();  // INITIALIZE
+
     }
 
     /**
@@ -105,8 +140,15 @@ public class TypeChecker {
      */
     private String getIdentifierType(IdentifierNode node) {
         String name = node.getName();
-        SymbolTable.VariableInfo varInfo = symbolTable.lookupVariable(name);
+        if (currentMethodName != null) {
+            Map<String, String> localVars = methodLocalVariables.get(currentMethodName);
+            if (localVars != null && localVars.containsKey(name)) {
+                return localVars.get(name);
+            }
+        }
 
+        // SECOND: Check global symbol table (for fields)
+        SymbolTable.VariableInfo varInfo = symbolTable.lookupVariable(name);
         if (varInfo != null) {
             return varInfo.type;
         }
@@ -211,14 +253,29 @@ public class TypeChecker {
      * Check assignment statement for type compatibility
      */
     public void checkAssignment(String varName, ASTNode expression, int line) {
-        SymbolTable.VariableInfo varInfo = symbolTable.lookupVariable(varName);
+        String varType = null;
 
-        if (varInfo == null) {
+        // Check current method's local variables first
+        if (currentMethodName != null) {
+            Map<String, String> localVars = methodLocalVariables.get(currentMethodName);
+            if (localVars != null && localVars.containsKey(varName)) {
+                varType = localVars.get(varName);
+            }
+        }
+
+        // If not found locally, check global symbol table
+        if (varType == null) {
+            SymbolTable.VariableInfo varInfo = symbolTable.lookupVariable(varName);
+            if (varInfo != null) {
+                varType = varInfo.type;
+            }
+        }
+
+        if (varType == null) {
             errors.add("Line " + line + ": Variable '" + varName + "' not declared");
             return;
         }
 
-        String varType = varInfo.type;
         String exprType = getExpressionType(expression);
 
         if (exprType.equals("unknown")) {
@@ -311,6 +368,109 @@ public class TypeChecker {
         analyzeNode(root);
     }
 
+    public void registerMethod(String name, String returnType, List<Parameter> parameters, int line) {
+        if (methodSignatures.containsKey(name)) {
+            errors.add("Line " + line + ": Method '" + name + "' already declared at line " +
+                    methodSignatures.get(name).line);
+            return;
+        }
+        methodSignatures.put(name, new MethodSignature(name, returnType, parameters, line));
+    }
+
+    /**
+     * Enter method context for return type checking
+     */
+    public void enterMethod(String name, String returnType) {
+        this.currentMethodName = name;
+        this.currentMethodReturnType = returnType;
+    }
+
+    /**
+     * Exit method context
+     */
+    public void exitMethod() {
+        this.currentMethodName = null;
+        this.currentMethodReturnType = null;
+    }
+
+    /**
+     * Check return statement type compatibility
+     */
+    public void checkReturnStatement(ASTNode returnExpr, int line) {
+        if (currentMethodReturnType == null) {
+            errors.add("Line " + line + ": Return statement outside of method");
+            return;
+        }
+
+        // Check void methods
+        if (currentMethodReturnType.equals("void")) {
+            if (returnExpr != null) {
+                errors.add("Line " + line + ": void method '" + currentMethodName +
+                        "' cannot return a value");
+            }
+            return;
+        }
+
+        // Non-void methods must return a value
+        if (returnExpr == null) {
+            errors.add("Line " + line + ": Method '" + currentMethodName +
+                    "' must return a value of type '" + currentMethodReturnType + "'");
+            return;
+        }
+
+        // Check type compatibility
+        String returnType = getExpressionType(returnExpr);
+        if (returnType.equals("unknown")) {
+            warnings.add("Line " + line + ": Cannot determine type of return expression");
+            return;
+        }
+
+        if (!isAssignmentCompatible(returnType, currentMethodReturnType)) {
+            errors.add("Line " + line + ": Incompatible return type. Expected '" +
+                    currentMethodReturnType + "' but got '" + returnType + "' in method '" +
+                    currentMethodName + "'");
+        }
+    }
+
+    /**
+     * Check method call arguments
+     */
+    public void checkMethodCall(String methodName, List<ASTNode> arguments, int line) {
+        MethodSignature signature = methodSignatures.get(methodName);
+
+        if (signature == null) {
+            warnings.add("Line " + line + ": Method '" + methodName + "' not found or not yet declared");
+            return;
+        }
+
+        // Check argument count
+        if (arguments.size() != signature.parameters.size()) {
+            errors.add("Line " + line + ": Method '" + methodName + "' expects " +
+                    signature.parameters.size() + " argument(s) but got " + arguments.size());
+            return;
+        }
+
+        // Check each argument type
+        for (int i = 0; i < arguments.size(); i++) {
+            Parameter param = signature.parameters.get(i);
+            ASTNode arg = arguments.get(i);
+
+            String argType = getExpressionType(arg);
+            String paramType = param.type;
+
+            if (argType.equals("unknown")) {
+                warnings.add("Line " + line + ": Cannot determine type of argument " +
+                        (i + 1) + " in call to '" + methodName + "'");
+                continue;
+            }
+
+            if (!isAssignmentCompatible(argType, paramType)) {
+                errors.add("Line " + line + ": Argument " + (i + 1) + " of method '" +
+                        methodName + "': expected '" + paramType + "' but got '" + argType + "'");
+            }
+        }
+    }
+
     /**
      * Recursively analyze AST nodes
      */
@@ -342,6 +502,10 @@ public class TypeChecker {
                 analyzeProgram((ProgrameNode) node);
             } else if (node instanceof VariableDeclarationNode) {
                 analyzeVariableDeclaration((VariableDeclarationNode) node);
+            } else if (node instanceof ReturnNode) {  // NEW
+                analyzeReturn((ReturnNode) node);
+            } else if (node instanceof MethodCallNode) {  // NEW
+                analyzeMethodCall((MethodCallNode) node);
             }
         } catch (Exception e) {
             warnings.add("Error analyzing node: " + e.getMessage());
@@ -487,14 +651,114 @@ public class TypeChecker {
     }
 
     private void analyzeMethod(MethodNode node) throws Exception {
+        java.lang.reflect.Field nameField = MethodNode.class.getDeclaredField("name");
+        java.lang.reflect.Field returnTypeField = MethodNode.class.getDeclaredField("returnType");
+        java.lang.reflect.Field paramsField = MethodNode.class.getDeclaredField("parameters");
         java.lang.reflect.Field stmtsField = MethodNode.class.getDeclaredField("statements");
-        stmtsField.setAccessible(true);
+        java.lang.reflect.Field lineField = ASTNode.class.getDeclaredField("line");
 
+        nameField.setAccessible(true);
+        returnTypeField.setAccessible(true);
+        paramsField.setAccessible(true);
+        stmtsField.setAccessible(true);
+        lineField.setAccessible(true);
+
+        String methodName = (String) nameField.get(node);
+        String returnType = (String) returnTypeField.get(node);
+        @SuppressWarnings("unchecked")
+        List<ASTNode> paramNodes = (List<ASTNode>) paramsField.get(node);
         @SuppressWarnings("unchecked")
         List<ASTNode> statements = (List<ASTNode>) stmtsField.get(node);
+        int line = (int) lineField.get(node);
 
-        for (ASTNode stmt : statements) {
-            analyzeNode(stmt);
+        // Extract parameter information
+        List<Parameter> parameters = new ArrayList<>();
+
+        // CREATE LOCAL VARIABLE MAP FOR THIS METHOD
+        Map<String, String> localVars = new HashMap<>();
+        methodLocalVariables.put(methodName, localVars);
+
+        if (paramNodes != null) {
+            for (ASTNode paramNode : paramNodes) {
+                if (paramNode instanceof ParameterNode) {
+                    java.lang.reflect.Field pNameField = ParameterNode.class.getDeclaredField("name");
+                    java.lang.reflect.Field pTypeField = ParameterNode.class.getDeclaredField("type");
+                    java.lang.reflect.Field pArrayField = ParameterNode.class.getDeclaredField("isArray");
+
+                    pNameField.setAccessible(true);
+                    pTypeField.setAccessible(true);
+                    pArrayField.setAccessible(true);
+
+                    String pName = (String) pNameField.get(paramNode);
+                    String pType = (String) pTypeField.get(paramNode);
+                    boolean pArray = (boolean) pArrayField.get(paramNode);
+
+                    // Add to parameters list for method signature
+                    parameters.add(new Parameter(pName, pType, pArray));
+
+                    // ADD PARAMETER TO LOCAL VARIABLES
+                    localVars.put(pName, pType);
+                }
+            }
+        }
+
+        // Register method signature
+        registerMethod(methodName, returnType, parameters, line);
+
+        // Enter method context
+        enterMethod(methodName, returnType);
+
+        // Analyze method body
+        if (statements != null) {
+            for (ASTNode stmt : statements) {
+                analyzeNode(stmt);
+            }
+        }
+
+        // Exit method context
+        exitMethod();
+    }
+    // ... rest of existing code ...
+
+    private void analyzeReturn(ReturnNode node) throws Exception {
+        java.lang.reflect.Field exprField = ReturnNode.class.getDeclaredField("expression");
+        java.lang.reflect.Field lineField = ASTNode.class.getDeclaredField("line");
+
+        exprField.setAccessible(true);
+        lineField.setAccessible(true);
+
+        ASTNode expr = (ASTNode) exprField.get(node);
+        int line = (int) lineField.get(node);
+
+        checkReturnStatement(expr, line);
+        analyzeNode(expr);
+    }
+
+    // ============================================
+    // NEW: Analyze method call
+    // ============================================
+
+    private void analyzeMethodCall(MethodCallNode node) throws Exception {
+        java.lang.reflect.Field nameField = MethodCallNode.class.getDeclaredField("methodName");
+        java.lang.reflect.Field argsField = MethodCallNode.class.getDeclaredField("arguments");
+        java.lang.reflect.Field lineField = ASTNode.class.getDeclaredField("line");
+
+        nameField.setAccessible(true);
+        argsField.setAccessible(true);
+        lineField.setAccessible(true);
+
+        String methodName = (String) nameField.get(node);
+        @SuppressWarnings("unchecked")
+        List<ASTNode> arguments = (List<ASTNode>) argsField.get(node);
+        int line = (int) lineField.get(node);
+
+        checkMethodCall(methodName, arguments != null ? arguments : new ArrayList<>(), line);
+
+        // Analyze argument expressions
+        if (arguments != null) {
+            for (ASTNode arg : arguments) {
+                analyzeNode(arg);
+            }
         }
     }
 
@@ -538,6 +802,13 @@ public class TypeChecker {
         String name = (String) nameField.get(node);
         int line = (int) lineField.get(node);
 
+        if (currentMethodName != null) {
+            Map<String, String> localVars = methodLocalVariables.get(currentMethodName);
+            if (localVars != null) {
+                localVars.put(name, type);
+            }
+        }
+
         if (initializer != null) {
             String initType = getExpressionType(initializer);
             if (!initType.equals("unknown") && !isAssignmentCompatible(initType, type)) {
@@ -551,21 +822,19 @@ public class TypeChecker {
      * Print type checking results
      */
     public void printResults() {
-        System.out.println("TYPE CHECKING RESULTS");
-        System.out.println("========================================");
 
         if (errors.isEmpty() && warnings.isEmpty()) {
             System.out.println(" No type errors found!");
         } else {
             if (!errors.isEmpty()) {
-                System.out.println("\n TYPE ERRORS:");
+                System.out.println("\nTYPE ERRORS:");
                 for (String error : errors) {
                     System.out.println("  " + error);
                 }
             }
 
             if (!warnings.isEmpty()) {
-                System.out.println("\n⚠ TYPE WARNINGS:");
+                System.out.println("\nTYPE WARNINGS:");
                 for (String warning : warnings) {
                     System.out.println("  " + warning);
                 }

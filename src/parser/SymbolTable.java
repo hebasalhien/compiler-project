@@ -101,37 +101,6 @@ public class SymbolTable {
         return null;
     }
 
-    /**
-     * Check if variable exists in current scope only
-     */
-    public boolean existsInCurrentScope(String name) {
-        return scopeStack.peek().containsKey(name);
-    }
-
-    // ==================== SCOPE MANAGEMENT ====================
-
-    /**
-     * Enter a new scope (for blocks, methods, etc.)
-     */
-    public void enterScope() {
-        scopeStack.push(new HashMap<>());
-    }
-
-    /**
-     * Exit current scope
-     */
-    public void exitScope() {
-        if (scopeStack.size() > 1) {
-            scopeStack.pop();
-        }
-    }
-
-    /**
-     * Get current scope level (0 = global)
-     */
-    public int getScopeLevel() {
-        return scopeStack.size() - 1;
-    }
 
     // ==================== UTILITY METHODS ====================
 
