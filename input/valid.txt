@@ -1,0 +1,45 @@
+public class ControlFlowExample {
+    int y = 3;
+//* scope 0
+    public static void x(){
+        //* scope 1
+       int y = 5;
+    }
+
+    public static void main(String[] args) {
+        int choice = 2;
+        int count =3;
+        // String count =5;
+        y = 7;
+        // int choice = 4;
+        
+        // while loop
+        while (count < 3) {
+            System.out.println("While loop count: " + count);
+            count++;
+        }
+
+        // do-while loop
+        int number = 1;
+        do {
+            System.out.println("Do-while number: " + number);
+            number++;
+        } while (number <= 3);
+
+        // switch statement
+        switch (choice) {
+            case 1:
+                System.out.println("Choice is ONE");
+                break;
+            case 2:
+                System.out.println("Choice is TWO");
+                break;
+            case 3:
+                System.out.println("Choice is THREE");
+                break;
+            default:
+                System.out.println("Invalid choice");
+        }
+    }
+}
+

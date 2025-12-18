@@ -1,0 +1,36 @@
+/*
+
+public class Test {
+    public static void main(String[] args) {
+        int x = 10
+        System.out.println(x);
+    }
+}
+
+*/
+/*
+
+public class Test {
+    public static void main(String[] args) {
+        int x = 5;
+}
+
+*/
+
+/*public class Test {
+    public static void main(String[] args {
+        System.out.println("Hello);
+    }
+}*/
+
+public class Test {
+    public static void main(String[] args) {
+        int x = ;
+    }
+}
+
+/*public class Test {
+    public static void main(String[] args) {
+        @@###$$
+    }
+}*/

@@ -1,0 +1,49 @@
+//* From JavaParser.jj
+//* ++x
+ASTNode PostDecrementExpression() : {
+    Token id, tDEC;
+}
+
+    {
+        id = <IDENTIFIER> tDEC=<DECREMENT>
+        {
+            recordToken(id);
+            recordToken(tDEC);
+            symbolTable.markVariableUsed(id.image);
+            return new UnaryOpNode("--", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                                  false, id.beginLine, id.beginColumn);
+        }
+    }
+//* --------------------------------------
+//* ++x
+ASTNode PreIncrementExpression() : {
+    Token tINC, id;
+}
+    {
+        tINC=<INCREMENT> id = <IDENTIFIER>
+        {
+            recordToken(tINC);
+            recordToken(id);
+            symbolTable.markVariableUsed(id.image);
+            return new UnaryOpNode("++", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                                  true, id.beginLine, id.beginColumn);
+        }
+    }
+
+//* --------------------------------------
+//* --x
+
+ASTNode PreDecrementExpression() : {
+    Token tDEC, id;
+}
+    {
+        tDEC=<DECREMENT> id = <IDENTIFIER>
+        {
+            recordToken(tDEC);
+            recordToken(id);
+            symbolTable.markVariableUsed(id.image);
+            return new UnaryOpNode("--", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                                  true, id.beginLine, id.beginColumn);
+        }
+    }
+
