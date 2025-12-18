@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 public class ControlFlowExample {
     int y = 3;
 //* scope 0
@@ -13,6 +14,15 @@ public class ControlFlowExample {
         y = 7;
         // int choice = 4;
         
+=======
+
+public class ControlFlowExample {
+
+    public static void main(String[] args) {
+        int choice = 2;
+        int count = 0;
+
+>>>>>>> 07b86b2cc00b5f4e34702ac0467c5543076875ee
         // while loop
         while (count < 3) {
             System.out.println("While loop count: " + count);
@@ -42,4 +52,7 @@ public class ControlFlowExample {
         }
     }
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 07b86b2cc00b5f4e34702ac0467c5543076875ee

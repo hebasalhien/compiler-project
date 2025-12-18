@@ -138,6 +138,7 @@ public class SymbolTable {
     /**
      * Enter a new scope (for blocks, methods, etc.)
      */
+    //TODO(kaizen) #change 12
     public void enterScope() {
         System.out.println("[log] Enter scope No " + scopeStack.size());
         scopeStack.push(new HashMap<>());
@@ -146,6 +147,7 @@ public class SymbolTable {
     /**
      * Exit current scope
      */
+    //TODO(kaizen) #change 12
     public void exitScope() {
         if (scopeStack.size() > 1) {
             scopeStack.pop();

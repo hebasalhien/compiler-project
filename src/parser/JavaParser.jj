@@ -68,7 +68,9 @@ public class JavaParser {
         recordSpecialTokens(t);
         symbolTable.addToken(t, getTokenName(t));
     }
-
+    public SymbolTable getSymbolTable() {
+        return this.symbolTable;
+    }
     public void printSymbolTable() {
         symbolTable.printSymbolTable();
     }
@@ -77,124 +79,333 @@ public class JavaParser {
         return symbolTable.getUnusedVariables();
         }
 
-    public static void main(String[] args) {
-        // Check if filename argument is provided
+    private static void checkDivisionInAST(ASTNode node) {
+        if (node == null) return;
 
-        // if (args.length < 1) {
-        //     System.err.println("Usage: java Main <input_file.java>");
-        //     System.exit(1);
-        // }
-
-        // String filename = args[0];
-        String filename = "D:/root/temp/faculty/compiler/repos/compiler-project/input/valid.txt";
-
-        try {
-
-            System.out.println("Input file: " + filename);
-            System.out.println();
-
-            // Create parser with input file
-            FileInputStream fis = new FileInputStream(filename);
-            JavaParser parser = new JavaParser(fis);
-
-            ASTNode ast = parser.Program();
-
-            System.out.println();
-            System.out.println("SYNTAX VALIDATION SUCCESSFUL!");
-            System.out.println();
-
-
-
-            // Display symbol table (Phase 1)
-
-            parser.printSymbolTable();
-            System.out.println();
-
-            // Display AST (Phase 3)
-            System.out.println("========================================");
-            System.out.println("ABSTRACT SYNTAX TREE (AST)");
-            System.out.println("========================================");
-            ast.print(0);
-            ast.printTree("",true);
-            System.out.println();
-            // Check for unused variables
-            System.out.println("========================================");
-            TypeChecker typeChecker = new TypeChecker(parser.symbolTable);
-            typeChecker.analyze(ast);
-            typeChecker.printResults();
-            System.out.println();
-            java.util.List<String> unused = parser.getUnusedVariables();
-            if (!unused.isEmpty()) {
-                System.out.println("========================================");
-                System.out.println("WARNINGS: UNUSED VARIABLES");
-                System.out.println("========================================");
-                for (String var : unused) {
-                    System.out.println(" -> " + var);
+        if (node instanceof BinaryOpNode) {
+            BinaryOpNode binOp = (BinaryOpNode) node;
+            if ((binOp.getOperator().equals("/") || binOp.getOperator().equals("%"))) {
+                if (binOp.getRight() instanceof LiteralNode) {
+                    LiteralNode literal = (LiteralNode) binOp.getRight();
+                    String value = literal.getValue().toLowerCase().replaceAll("[lfd]$", "");
+                    try {
+                        double numValue = Double.parseDouble(value);
+                        if (numValue == 0.0) {
+                            throw new RuntimeException(
+                                "runtime error! at line " + binOp.line +
+                                ", column " + binOp.column + " . Division/Modulo by zero"
+                            );
+                        }
+                    } catch (NumberFormatException e) {
+                        // Ignore
+                    }
                 }
-                System.out.println();
             }
-
-            // Close the input stream
-            fis.close();
-
-            // Summary
-
-            System.out.println("Phase 1 (Lexical Analysis): Complete");
-            System.out.println("Phase 2 (Syntax Analysis): Complete");
-            System.out.println("No syntax errors detected");
-            System.out.println();
-
-        } catch (FileNotFoundException e) {
-            System.err.println("✗ ERROR: File '" + filename + "' not found.");
-            System.exit(1);
-
-        } catch (ParseException e) {
-            // Handle syntax errors
-            System.err.println();
-            System.err.println("|    SYNTAX ERROR DETECTED   |");
-            System.err.println();
-            System.err.println("Location: Line " + e.currentToken.next.beginLine +
-                    ", Column " + e.currentToken.next.beginColumn);
-            System.err.println();
-
-            // Display error message
-            System.err.println("Error Message:");
-            System.err.println("\t" + e.getMessage());
-
-            // Try to provide more helpful context
-            if (e.currentToken != null && e.currentToken.next != null) {
-                System.err.println("Unexpected token: \"" + e.currentToken.next.image + "\"");
-                System.err.println();
+            checkDivisionInAST(binOp.getLeft());
+            checkDivisionInAST(binOp.getRight());
+        } else if (node instanceof ProgrameNode) {
+            ProgrameNode prog = (ProgrameNode) node;
+            for (ASTNode child : prog.getClasses()) {
+                checkDivisionInAST(child);
             }
-
-            System.exit(1);
-
-        } catch (TokenMgrError e) {
-            // Handle lexical errors (invalid tokens)
-            System.err.println();
-            System.err.println("║   ✗ Lexical Error Detected             ║");
-            System.err.println();
-            System.err.println("Invalid token or character encountered");
-            System.err.println();
-            System.err.println("Error Message:");
-            System.err.println("  " + e.getMessage());
-            System.err.println();
-            System.exit(1);
-
-        } catch (IOException e) {
-            System.err.println("✗ Error: Could not read file: " + e.getMessage());
-            System.exit(1);
-
-        }catch ( RuntimeException e)
-        {
-            System.err.println(e.getMessage());
-            System.exit(1);
-        }catch (Exception e) {
-            System.err.println("✗ Unexpected Error: " + e.getMessage());
-            e.printStackTrace();
-            System.exit(1);
+        } else if (node instanceof ClassNode) {
+            ClassNode cls = (ClassNode) node;
+            for (ASTNode member : cls.getMembers()) {
+                checkDivisionInAST(member);
+            }
+        } else if (node instanceof MethodNode) {
+            MethodNode method = (MethodNode) node;
+            for (ASTNode stmt : method.getStatements()) {
+                checkDivisionInAST(stmt);
+            }
+        } else if (node instanceof BlockNode) {
+            BlockNode block = (BlockNode) node;
+            for (ASTNode stmt : block.getStatements()) {
+                checkDivisionInAST(stmt);
+            }
+        } else if (node instanceof IfNode) {
+            IfNode ifNode = (IfNode) node;
+            checkDivisionInAST(ifNode.getCondition());
+            checkDivisionInAST(ifNode.getThenStatement());
+            checkDivisionInAST(ifNode.getElseStatement());
+        } else if (node instanceof WhileNode) {
+            WhileNode whileNode = (WhileNode) node;
+            checkDivisionInAST(whileNode.getCondition());
+            checkDivisionInAST(whileNode.getBody());
+        } else if (node instanceof DoWhileNode) {
+            DoWhileNode doWhile = (DoWhileNode) node;
+            checkDivisionInAST(doWhile.getBody());
+            checkDivisionInAST(doWhile.getCondition());
+        } else if (node instanceof ForNode) {
+            ForNode forNode = (ForNode) node;
+            checkDivisionInAST(forNode.getInit());
+            checkDivisionInAST(forNode.getCondition());
+            checkDivisionInAST(forNode.getUpdate());
+            checkDivisionInAST(forNode.getBody());
+        } else if (node instanceof SwitchNode) {
+            SwitchNode switchNode = (SwitchNode) node;
+            checkDivisionInAST(switchNode.getExpression());
+            for (ASTNode caseNode : switchNode.getCases()) {
+                checkDivisionInAST(caseNode);
+            }
+            checkDivisionInAST(switchNode.getDefaultCase());
+        } else if (node instanceof CaseNode) {
+            CaseNode caseNode = (CaseNode) node;
+            checkDivisionInAST(caseNode.getValue());
+            for (ASTNode stmt : caseNode.getStatements()) {
+                checkDivisionInAST(stmt);
+            }
+        } else if (node instanceof DefaultCaseNode) {
+            DefaultCaseNode defaultCase = (DefaultCaseNode) node;
+            for (ASTNode stmt : defaultCase.getStatements()) {
+                checkDivisionInAST(stmt);
+            }
+        } else if (node instanceof ReturnNode) {
+            ReturnNode returnNode = (ReturnNode) node;
+            checkDivisionInAST(returnNode.getExpression());
+        } else if (node instanceof AssignmentNode) {
+            AssignmentNode assignment = (AssignmentNode) node;
+            checkDivisionInAST(assignment.getExpression());
+        } else if (node instanceof VariableDeclarationNode) {
+            VariableDeclarationNode varDecl = (VariableDeclarationNode) node;
+            checkDivisionInAST(varDecl.getInitializer());
+        } else if (node instanceof UnaryOpNode) {
+            UnaryOpNode unary = (UnaryOpNode) node;
+            checkDivisionInAST(unary.getOperand());
+        } else if (node instanceof MethodCallNode) {
+            MethodCallNode methodCall = (MethodCallNode) node;
+            for (ASTNode arg : methodCall.getArguments()) {
+                checkDivisionInAST(arg);
+            }
         }
     }
+
+    private static void checkUselessStatements(ASTNode node) {
+        if (node == null) return;
+
+        if (node instanceof MethodNode) {
+            MethodNode method = (MethodNode) node;
+            for (ASTNode stmt : method.getStatements()) {
+                // Check if statement is just an identifier or literal
+                if (stmt instanceof IdentifierNode) {
+                    System.err.println("WARNING: Line " + stmt.line +
+                        " - Statement has no effect (unused variable reference '" +
+                        ((IdentifierNode)stmt).getName() + "')");
+                } else if (stmt instanceof LiteralNode) {
+                    System.err.println("WARNING: Line " + stmt.line +
+                        " - Statement has no effect (unused literal)");
+                }
+                checkUselessStatements(stmt);
+            }
+        } else if (node instanceof ClassNode) {
+            ClassNode cls = (ClassNode) node;
+            for (ASTNode member : cls.getMembers()) {
+                checkUselessStatements(member);
+            }
+        } else if (node instanceof ProgrameNode) {
+            ProgrameNode prog = (ProgrameNode) node;
+            for (ASTNode cls : prog.getClasses()) {
+                checkUselessStatements(cls);
+            }
+        }
+    }
+            public static void main(String[] args) {
+                // Check if filename argument is provided
+
+                if (args.length < 1) {
+                    System.err.println("Usage: java Main <input_file.java>");
+                    System.exit(1);
+                }
+
+                String filename = args[0];
+
+                try {
+
+                    System.out.println("Input file: " + filename);
+                    System.out.println();
+
+                    // Create parser with input file
+                    FileInputStream fis = new FileInputStream(filename);
+                    JavaParser parser = new JavaParser(fis);
+
+                    ASTNode ast = parser.Program();
+
+                    System.out.println();
+                    System.out.println("SYNTAX VALIDATION SUCCESSFUL!");
+                    System.out.println();
+
+
+
+                    // Display symbol table (Phase 1)
+
+                    parser.printSymbolTable();
+                    System.out.println();
+
+                    // Display AST (Phase 3)
+                    System.out.println("========================================");
+                    System.out.println("ABSTRACT SYNTAX TREE (AST)");
+                    System.out.println("========================================");
+                    ast.print(0);
+                    ast.printTree("",true);
+                    System.out.println();
+                    // Check for unused variables
+                        checkDivisionInAST(ast);
+
+                    System.out.println("TYPE CHECKING");
+                    System.out.println("========================================");
+                    TypeChecker typeChecker = new TypeChecker(parser.getSymbolTable());
+                    typeChecker.analyze(ast);
+                    typeChecker.printResults();
+
+                    // Exit if there are type errors
+                    if (typeChecker.hasErrors()) {
+                        System.err.println("Compilation failed due to type errors.");
+                        System.exit(1);
+                    }
+
+                    java.util.List<String> unused = parser.getUnusedVariables();
+                    if (!unused.isEmpty()) {
+                        System.out.println("========================================");
+                        System.out.println("WARNINGS: UNUSED VARIABLES");
+                        System.out.println("========================================");
+                        for (String var : unused) {
+                            System.out.println(" -> " + var);
+                        }
+                        System.out.println();
+                    }
+
+                    // Close the input stream
+                    fis.close();
+
+                    // Summary
+
+                    System.out.println("Phase 1 (Lexical Analysis): Complete");
+                    System.out.println("Phase 2 (Syntax Analysis): Complete");
+                    System.out.println("No syntax errors detected");
+                    System.out.println();
+
+                } catch (FileNotFoundException e) {
+                    System.err.println("✗ ERROR: File '" + filename + "' not found.");
+                    System.exit(1);
+
+                } catch (ParseException e) {
+                      // Handle syntax errors
+                      System.err.println();
+                      System.err.println("╔════════════════════════════════════════╗");
+                      System.err.println("║    SYNTAX ERROR DETECTED               ║");
+                      System.err.println("╚════════════════════════════════════════╝");
+                      System.err.println();
+
+                      int errorLine = e.currentToken.next.beginLine;
+                      int errorColumn = e.currentToken.next.beginColumn;
+
+                      System.err.println("Location: Line " + errorLine + ", Column " + errorColumn);
+                      System.err.println();
+
+                      // Try to read the problematic line from the file to analyze it
+                      boolean isMissingReturnType = false;
+
+                      try {
+                          BufferedReader reader = new BufferedReader(new FileReader(filename));
+                          String line = null;
+                          int lineNum = 0;
+
+                          // Read to the error line
+                          while ((line = reader.readLine()) != null && lineNum < errorLine) {
+                              lineNum++;
+                              if (lineNum == errorLine) {
+                                  // Check if this line matches the pattern of missing return type
+                                  String trimmed = line.trim();
+
+                                  // Pattern: starts with modifier(s) and has identifier followed by (
+                                  // Examples: "public calculate(", "private static myMethod("
+                                  if (trimmed.matches("^(public|private|protected|static)\\s+.*\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(.*") ||
+                                      trimmed.matches("^(public|private|protected|static)\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(.*")) {
+
+                                      // Check if it doesn't have a return type keyword
+                                      if (!trimmed.matches(".*(void|int|long|short|byte|float|double|boolean|char|String)\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(.*")) {
+                                          isMissingReturnType = true;
+                                      }
+                                  }
+                                  break;
+                              }
+                          }
+                          reader.close();
+                      } catch (Exception ex) {
+                          // If we can't read file, just show generic error
+                      }
+
+                      if (isMissingReturnType) {
+                          System.err.println("Error: Missing return type in method declaration");
+                          System.err.println();
+                          System.err.println("Hint: Every method in Java must have a return type.");
+                          System.err.println("      If the method doesn't return a value, use 'void'.");
+                          System.err.println();
+                          System.err.println("Examples:");
+                          System.err.println(" public void calculate() { ... }");
+                          System.err.println(" public int calculate() { ... }");
+                          System.err.println(" public calculate() { ... }  // Missing return type!");
+                          System.err.println();
+                      } else {
+                          // Display generic error message
+                          System.err.println("Error Message:");
+                          System.err.println("  " + e.getMessage());
+                          System.err.println();
+
+                          // Try to provide more helpful context
+                          if (e.currentToken != null && e.currentToken.next != null) {
+                              System.err.println("Unexpected token: \"" + e.currentToken.next.image + "\"");
+                              System.err.println();
+                          }
+                      }
+
+                      System.exit(1);
+                  }catch (TokenMgrError e) {
+                    // Handle lexical errors (invalid tokens)
+                    System.err.println();
+                    System.err.println("╔════════════════════════════════════════╗");
+                    System.err.println("║   ✗ LEXICAL ERROR DETECTED             ║");
+                    System.err.println("╚════════════════════════════════════════╝");
+                    System.err.println();
+    String errorMsg = e.getMessage();
+
+    // Check if it's an invalid identifier
+    if (errorMsg.toLowerCase().contains("invalid") ||
+        errorMsg.contains("INVALID_IDENTIFIER")) {
+
+        System.err.println("Error: Invalid identifier detected");
+        System.err.println();
+        System.err.println("Details: " + errorMsg);
+        System.err.println();
+        System.err.println("Hint: Java identifiers cannot start with a digit.");
+        System.err.println("      They must start with a letter, underscore (_), or dollar sign ($).");
+        System.err.println();
+        System.err.println("   int 10x;       // Invalid - starts with digit!");
+        System.err.println();
+    } else {
+        System.err.println("Invalid token or character encountered");
+        System.err.println();
+        System.err.println("Error Message:");
+        System.err.println("  " + errorMsg);
+        System.err.println();
+    }
+                    System.exit(1);
+
+                } catch (IOException e) {
+                    System.err.println("✗ ERROR: Could not read file: " + e.getMessage());
+                    System.exit(1);
+
+                }catch ( RuntimeException e)
+                {
+                    System.err.println(e.getMessage());
+                    System.exit(1);
+                }catch (Exception e) {
+                    System.err.println("✗ UNEXPECTED ERROR: " + e.getMessage());
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+            }
+
 
 }
 
@@ -239,9 +450,13 @@ TOKEN : {
 | <DOT: ".">| <COLON:":">
 }
 
+
+
 TOKEN : {
-//LITERAL
-<INTEGER_LITERAL: (["0"-"9"])+>| <LONG_LITERAL: (["0"-"9"])+ ("l"|"L")>
+//
+//LITERAL - Modified to catch invalid identifiers
+  <INTEGER_LITERAL: (["0"-"9"])+>
+| <LONG_LITERAL: (["0"-"9"])+ ("l"|"L")>
 | <FLOAT_LITERAL: (["0"-"9"])+ "." (["0"-"9"])+ ("f"|"F") | (["0"-"9"])+ ("f"|"F")>
 | <DOUBLE_LITERAL: (["0"-"9"])+ "." (["0"-"9"])+| (["0"-"9"])+ "." (["0"-"9"])+ ("d"|"D")>
 | <STRING_LITERAL: "\"" (~["\"","\\"] | "\\" ~[])* "\"">
@@ -249,12 +464,19 @@ TOKEN : {
 | <BOOLEAN_LITERAL: "true" | "false">
 | <NULL_LITERAL: "null">
 }
-
 TOKEN : {
-
   <IDENTIFIER: ["a"-"z","A"-"Z","_"] (["a"-"z","A"-"Z","0"-"9","_"])*>
 }
-
+SPECIAL_TOKEN : {
+  <INVALID_ID: (["0"-"9"])+ (["a"-"z","A"-"Z","_"]) (["a"-"z","A"-"Z","0"-"9","_"])*> {
+    throw new TokenMgrError(
+      "Lexical error at line " + input_stream.getBeginLine() +
+      ", column " + input_stream.getBeginColumn() +
+      ": Invalid identifier '" + image.toString() + "' - identifiers cannot start with a digit",
+      TokenMgrError.LEXICAL_ERROR
+    );
+  }
+}
 ///=====================phase2:parsing====================///
 
 ASTNode Program():{
@@ -265,8 +487,8 @@ ASTNode Program():{
     //* scope 0
 {symbolTable.enterScope();} //TODO (kaizen) #12
 
-classDecl= ClassDeclaration()
-   { program.addClass(classDecl); }
+(classDecl= ClassDeclaration()
+   { program.addClass(classDecl); })+
 {symbolTable.exitScope();} //TODO (kaizen) #12
 
 <EOF>
@@ -461,7 +683,6 @@ ASTNode Statement():{
         { return node; }
 
 }
-
 ASTNode StatementExpression() : {
    ASTNode node;
      Token tSEMICOLON;
@@ -473,14 +694,13 @@ ASTNode StatementExpression() : {
     |   LOOKAHEAD(<IDENTIFIER> <LPAREN>)
         node = MethodCall()
     |   LOOKAHEAD(<IDENTIFIER> <INCREMENT>)
-        node = PostIncrementExpressionWithoutSemicolon()
+        node = PostIncrementExpression()
     |   LOOKAHEAD(<IDENTIFIER> <DECREMENT>)
-        node = PostDecrementExpressionWithoutSemicolon()
+        node = PostDecrementExpression()
     |   LOOKAHEAD(<INCREMENT> <IDENTIFIER>)
-        node = PreIncrementExpressionWithoutSemicolon()
+        node = PreIncrementExpression()
     |   LOOKAHEAD(<DECREMENT> <IDENTIFIER>)
-        node = PreDecrementExpressionWithoutSemicolon()
-    |   node = PrimaryExpression()
+        node = PreDecrementExpression()
     )
     tSEMICOLON=<SEMICOLON>
     {recordToken(tSEMICOLON);
@@ -1058,7 +1278,48 @@ ASTNode PostIncrementExpression() : {
 }
 
 
-//* int , long, float, double, String, char, boolean,
+ASTNode PostDecrementExpression() : {
+    Token id, tDEC;
+}
+    {
+        id = <IDENTIFIER> tDEC=<DECREMENT>
+        {
+            recordToken(id);
+            recordToken(tDEC);
+            symbolTable.markVariableUsed(id.image);
+            return new UnaryOpNode("--", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                                  false, id.beginLine, id.beginColumn);
+        }
+    }
+
+ASTNode PreIncrementExpression() : {
+    Token tINC, id;
+}
+    {
+        tINC=<INCREMENT> id = <IDENTIFIER>
+        {
+            recordToken(tINC);
+            recordToken(id);
+            symbolTable.markVariableUsed(id.image);
+            return new UnaryOpNode("++", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                                  true, id.beginLine, id.beginColumn);
+        }
+    }
+
+ASTNode PreDecrementExpression() : {
+    Token tDEC, id;
+}
+    {
+        tDEC=<DECREMENT> id = <IDENTIFIER>
+        {
+            recordToken(tDEC);
+            recordToken(id);
+            symbolTable.markVariableUsed(id.image);
+            return new UnaryOpNode("--", new IdentifierNode(id.image, id.beginLine, id.beginColumn),
+                                  true, id.beginLine, id.beginColumn);
+        }
+    }
+
 ASTNode PrimaryExpression() : {
     Token t, tLPAREN, tRPAREN;
     ASTNode node;

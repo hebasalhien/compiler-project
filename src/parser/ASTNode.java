@@ -10,6 +10,14 @@ public abstract  class ASTNode {
         this.column = column;
     }
 
+    public int getLine() {
+        return line;
+    }
+
+    public int getColumn() {
+        return column;
+    }
+
     public abstract void print(int indent);
 
     protected void printIndent(int indent) {
@@ -35,7 +43,11 @@ class ProgrameNode extends ASTNode {
     }
 
     public void addClass(ASTNode classNode) {
-        classes.add(classNode);
+        this.classes.add(classNode);
+    }
+
+    public List<ASTNode> getClasses() {
+        return classes;
     }
 
     @Override
@@ -70,9 +82,21 @@ class ClassNode extends ASTNode {
         members.add(member);
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getModifiers() {
+        return modifiers;
+    }
+
+    public List<ASTNode> getMembers() {
+        return members;
+    }
+
     @Override
     public void print(int indent) {
-    printIndent(indent);
+        printIndent(indent);
         if (modifiers != null && !modifiers.isEmpty()) {
             System.out.println("ClassDeclaration: " + modifiers + " " + name + " [Line " + line + "]");
         } else {
@@ -119,6 +143,25 @@ class MethodNode extends ASTNode {
         this.statements=statement;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getReturnType() {
+        return returnType;
+    }
+
+    public String getModifiers() {
+        return modifiers;
+    }
+
+    public List<ASTNode> getParameters() {
+        return parameters;
+    }
+
+    public List<ASTNode> getStatements() {
+        return statements;
+    }
 
     @Override
     public void print(int indent) {
@@ -151,7 +194,8 @@ class MethodNode extends ASTNode {
             tree(prefix,isLast,"MethodDeclaration: " + modifiers + " " + returnType + " " + name + " [Line " + line + "]");
         } else {
             tree(prefix,isLast,"MethodDeclaration: " + returnType + " " + name + " [Line " + line + "]");
-        }        String p = prefix + (isLast ? "    " : "│   ");
+        }
+        String p = prefix + (isLast ? "    " : "│   ");
 
         if (!parameters.isEmpty()) {
             tree(p, false, "Parameters");
@@ -180,6 +224,18 @@ class ParameterNode extends ASTNode {
         this.isArray=isArray;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public boolean isArray() {
+        return isArray;
+    }
+
     @Override
     public void print(int indent) {
         printIndent(indent);
@@ -193,7 +249,6 @@ class ParameterNode extends ASTNode {
         String arr = isArray ? "[]" : "";
         tree(prefix, isLast, "Parameter: " + type + arr + " " + name);
     }
-
 }
 
 class FieldNode extends ASTNode {
@@ -208,6 +263,22 @@ class FieldNode extends ASTNode {
         this.type = type;
         this.name = name;
         this.isArray = isArray;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getModifiers() {
+        return modifiers;
+    }
+
+    public boolean isArray() {
+        return isArray;
     }
 
     @Override
@@ -240,6 +311,21 @@ class VariableDeclarationNode extends ASTNode{
         this.initializer = initializer;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public boolean isArray() {
+        return isArray;
+    }
+
+    public ASTNode getInitializer() {
+        return initializer;
+    }
 
     @Override
     public void print(int indent) {
@@ -271,6 +357,14 @@ class AssignmentNode extends ASTNode {
         this.expression = expression;
     }
 
+    public String getVariableName() {
+        return variableName;
+    }
+
+    public ASTNode getExpression() {
+        return expression;
+    }
+
     @Override
     public void print(int indent) {
         printIndent(indent);
@@ -300,6 +394,18 @@ class IfNode extends ASTNode {
         this.condition = condition;
         this.thenStatement = thenStatement;
         this.elseStatement = elseStatement;
+    }
+
+    public ASTNode getCondition() {
+        return condition;
+    }
+
+    public ASTNode getThenStatement() {
+        return thenStatement;
+    }
+
+    public ASTNode getElseStatement() {
+        return elseStatement;
     }
 
     @Override
@@ -349,6 +455,14 @@ class WhileNode extends ASTNode {
         this.body = body;
     }
 
+    public ASTNode getCondition() {
+        return condition;
+    }
+
+    public ASTNode getBody() {
+        return body;
+    }
+
     @Override
     public void print(int indent) {
         printIndent(indent);
@@ -375,7 +489,6 @@ class WhileNode extends ASTNode {
     }
 }
 
-
 class DoWhileNode extends ASTNode {
     private ASTNode condition;
     private ASTNode body;
@@ -384,6 +497,14 @@ class DoWhileNode extends ASTNode {
         super(line, column);
         this.condition = condition;
         this.body = body;
+    }
+
+    public ASTNode getCondition() {
+        return condition;
+    }
+
+    public ASTNode getBody() {
+        return body;
     }
 
     @Override
@@ -424,6 +545,22 @@ class ForNode extends ASTNode {
         this.condition = condition;
         this.update = update;
         this.body = body;
+    }
+
+    public ASTNode getInit() {
+        return init;
+    }
+
+    public ASTNode getCondition() {
+        return condition;
+    }
+
+    public ASTNode getUpdate() {
+        return update;
+    }
+
+    public ASTNode getBody() {
+        return body;
     }
 
     @Override
@@ -485,6 +622,18 @@ class SwitchNode extends ASTNode {
         this.defaultCase = defaultCase;
     }
 
+    public ASTNode getExpression() {
+        return expression;
+    }
+
+    public List<ASTNode> getCases() {
+        return cases;
+    }
+
+    public ASTNode getDefaultCase() {
+        return defaultCase;
+    }
+
     @Override
     public void print(int indent) {
         printIndent(indent);
@@ -527,6 +676,14 @@ class CaseNode extends ASTNode {
         statements.add(statement);
     }
 
+    public ASTNode getValue() {
+        return value;
+    }
+
+    public List<ASTNode> getStatements() {
+        return statements;
+    }
+
     @Override
     public void print(int indent) {
         printIndent(indent);
@@ -564,6 +721,10 @@ class DefaultCaseNode extends ASTNode {
         statements.add(statement);
     }
 
+    public List<ASTNode> getStatements() {
+        return statements;
+    }
+
     @Override
     public void print(int indent) {
         printIndent(indent);
@@ -590,6 +751,10 @@ class ReturnNode extends ASTNode {
     public ReturnNode(ASTNode expression, int line, int column) {
         super(line, column);
         this.expression = expression;
+    }
+
+    public ASTNode getExpression() {
+        return expression;
     }
 
     @Override
@@ -652,6 +817,10 @@ class BlockNode extends ASTNode {
         this.statements = statements;
     }
 
+    public List<ASTNode> getStatements() {
+        return statements;
+    }
+
     @Override
     public void print(int indent) {
         printIndent(indent);
@@ -682,6 +851,18 @@ class BinaryOpNode extends ASTNode {
         this.operator = operator;
         this.left = left;
         this.right = right;
+    }
+
+    public ASTNode getLeft() {
+        return left;
+    }
+
+    public ASTNode getRight() {
+        return right;
+    }
+
+    public String getOperator() {
+        return operator;
     }
 
     @Override
@@ -717,6 +898,18 @@ class UnaryOpNode extends ASTNode {
         this.isPrefix = isPrefix;
     }
 
+    public String getOperator() {
+        return operator;
+    }
+
+    public ASTNode getOperand() {
+        return operand;
+    }
+
+    public boolean isPrefix() {
+        return isPrefix;
+    }
+
     @Override
     public void print(int indent) {
         printIndent(indent);
@@ -734,7 +927,6 @@ class UnaryOpNode extends ASTNode {
     }
 }
 
-
 class LiteralNode extends ASTNode {
     private String type;
     private String value;
@@ -743,6 +935,14 @@ class LiteralNode extends ASTNode {
         super(line, column);
         this.type = type;
         this.value = value;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public String getValue() {
+        return value;
     }
 
     @Override
@@ -793,6 +993,14 @@ class MethodCallNode extends ASTNode {
         this.arguments = arguments;
     }
 
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public List<ASTNode> getArguments() {
+        return arguments;
+    }
+
     @Override
     public void print(int indent) {
         printIndent(indent);
@@ -825,6 +1033,13 @@ class MemberAccessNode extends ASTNode {
 
     public void addMember(String member) {
         members.add(member);
+    }
+    public List<String> getMembers(){
+        return members;
+    }
+
+    public ASTNode getMethodCall(){
+        return methodCall;
     }
 
     public void setMethodCall(ASTNode methodCall) {

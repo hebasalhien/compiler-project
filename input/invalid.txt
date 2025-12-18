@@ -1,10 +1,15 @@
+<<<<<<< HEAD
 /*
 
 public class Test {
+=======
+/*public class Test {
+>>>>>>> 07b86b2cc00b5f4e34702ac0467c5543076875ee
     public static void main(String[] args) {
         int x = 10
         System.out.println(x);
     }
+<<<<<<< HEAD
 }
 
 */
@@ -20,6 +25,17 @@ public class Test {
 /*public class Test {
     public static void main(String[] args {
         System.out.println("Hello);
+=======
+}*/
+/*public class Test {
+    public static void main(String[] args) {
+        int x = 5;
+}*/
+
+/*public class Test {
+    public static void main(String[] args {
+        System.out.println("Hello");
+>>>>>>> 07b86b2cc00b5f4e34702ac0467c5543076875ee
     }
 }*/
 
