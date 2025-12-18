@@ -36,11 +36,10 @@ public abstract  class ASTNode {
 }
 
 class ProgrameNode extends ASTNode {
-    private List<ASTNode> classes;
+    private List<ASTNode> classes = new ArrayList<>();
 
     public ProgrameNode() {
         super(0, 0);
-        this.classes = new ArrayList<>();
     }
 
     public void addClass(ASTNode classNode) {
@@ -55,9 +54,8 @@ class ProgrameNode extends ASTNode {
     public void print(int indent) {
         printIndent(indent);
         System.out.println("Program");
-
         for (ASTNode classNode : classes) {
-            classNode.print(indent + 2);
+            classNode.print(indent + 1);
         }
     }
 
@@ -65,7 +63,6 @@ class ProgrameNode extends ASTNode {
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "Program");
         String p = prefix + (isLast ? "    " : "│   ");
-
         for (int i = 0; i < classes.size(); i++) {
             classes.get(i).printTree(p, i == classes.size() - 1);
         }
@@ -76,13 +73,11 @@ class ClassNode extends ASTNode {
     private String modifiers;
     private String name;
     private List<ASTNode> members = new ArrayList<>();
-
     public ClassNode(String name,String modifiers,int line, int column) {
         super(line, column);
         this.name=name;
         this.modifiers=modifiers;
     }
-
     public void addMember(ASTNode member) {
         members.add(member);
     }
@@ -132,7 +127,6 @@ class MethodNode extends ASTNode {
     private String name;
     private  List<ASTNode> parameters ;
     private  List<ASTNode> statements ;
-
     public MethodNode(String modifiers,String returnType,String name,int line, int column) {
         super(line, column);
         this.modifiers=modifiers;
@@ -141,7 +135,6 @@ class MethodNode extends ASTNode {
         this.parameters = new ArrayList<>();
         this.statements = new ArrayList<>();
     }
-
     public void setParameter(List<ASTNode> parameter) {
         this.parameters=parameter;
     }
@@ -218,13 +211,12 @@ class MethodNode extends ASTNode {
             }
         }
     }
-}
 
+}
 class ParameterNode extends ASTNode {
     private String type;
     private String name;
     private boolean isArray;
-
     public ParameterNode(String type,String name,boolean isArray,int line, int column) {
         super(line, column);
         this.name=name;
@@ -251,9 +243,7 @@ class ParameterNode extends ASTNode {
             System.out.println("Parameter: " + type + "[] " + name);
         } else {
             System.out.println("Parameter: " + type + " " + name);
-        }
-    }
-
+        }    }
     @Override
     public void printTree(String prefix, boolean isLast) {
         String arr = isArray ? "[]" : "";
@@ -301,14 +291,12 @@ class FieldNode extends ASTNode {
             System.out.println("Field: " + type + arrayStr + " " + name + " [Line " + line + "]");
         }
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         String arr = isArray ? "[]" : "";
         tree(prefix, isLast, "Field: " + type + arr + " " + name + " [Line " + line + "]");
     }
 }
-
 class VariableDeclarationNode extends ASTNode{
     private String type;
     private String name;
@@ -350,7 +338,6 @@ class VariableDeclarationNode extends ASTNode{
             initializer.print(indent + 2);
         }
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "VariableDeclaration: " + type + " " + name+ " [Line " + line + "]");
@@ -388,7 +375,6 @@ class AssignmentNode extends ASTNode {
             expression.print(indent + 2);
         }
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "Assignment: " + variableName+ " [Line " + line + "]");
@@ -441,7 +427,6 @@ class IfNode extends ASTNode {
             elseStatement.print(indent + 2);
         }
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "IfStatement [line "+line+ " ]");
@@ -491,7 +476,6 @@ class WhileNode extends ASTNode {
         System.out.println("Body:");
         body.print(indent + 2);
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "WhileLoop [Line " + line + "]");
@@ -536,7 +520,6 @@ class DoWhileNode extends ASTNode {
         System.out.println("Condition:");
         condition.print(indent + 2);
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "DoWhileLoop [Line " + line + "]");
@@ -607,7 +590,6 @@ class ForNode extends ASTNode {
         System.out.println("Body:");
         body.print(indent + 2);
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "ForLoop [Line " + line + "]");
@@ -669,7 +651,6 @@ class SwitchNode extends ASTNode {
             defaultCase.print(indent + 1);
         }
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "SwitchStatement [Line " + line + "]");
@@ -720,7 +701,6 @@ class CaseNode extends ASTNode {
             }
         }
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "Case [Line " + line + "]");
@@ -758,7 +738,6 @@ class DefaultCaseNode extends ASTNode {
             }
         }
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "Default [Line " + line + "]");
@@ -788,7 +767,6 @@ class ReturnNode extends ASTNode {
             expression.print(indent + 2);
         }
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "ReturnStatement [Line " + line + "]");
@@ -808,7 +786,6 @@ class BreakNode extends ASTNode {
         printIndent(indent);
         System.out.println("BreakStatement [Line " + line + "]");
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "BreakStatement [Line " + line + "]");
@@ -826,7 +803,6 @@ class ContinueNode extends ASTNode {
         printIndent(indent);
         System.out.println("ContinueStatement [Line " + line + "]");
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "ContinueStatement [Line " + line + "]");
@@ -853,16 +829,17 @@ class BlockNode extends ASTNode {
             stmt.print(indent + 1);
         }
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
-        tree(prefix, isLast, "Block [Line " + line);
+        tree(prefix, isLast, "Block [Line " + line + "]");
         String p = prefix + (isLast ? "    " : "│   ");
         for (int i = 0; i < statements.size(); i++) {
             statements.get(i).printTree(p, i == statements.size() - 1);
         }
     }
 }
+
+
 
 class BinaryOpNode extends ASTNode {
     private String operator;
@@ -901,7 +878,6 @@ class BinaryOpNode extends ASTNode {
         System.out.println("Right:");
         right.print(indent + 2);
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "BinaryOp: " + operator);
@@ -944,7 +920,6 @@ class UnaryOpNode extends ASTNode {
         System.out.println("Operand:");
         operand.print(indent + 2);
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "UnaryOp: " + operator+  "[Line " + line + "]");
@@ -975,7 +950,6 @@ class LiteralNode extends ASTNode {
         printIndent(indent);
         System.out.println("Literal: " + type + " = " + value);
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "Literal: " +type+ " = "+ value);
@@ -999,7 +973,6 @@ class IdentifierNode extends ASTNode {
         printIndent(indent);
         System.out.println("Identifier: " + name);
     }
-
     @Override
     public void printTree(String prefix, boolean isLast) {
         tree(prefix, isLast, "Identifier: " + name);
@@ -1046,7 +1019,8 @@ class MethodCallNode extends ASTNode {
         tree(prefix, isLast, "MethodCall: " + methodName+ " [Line " + line + "]");
         for (ASTNode a : arguments)
             a.printTree(prefix + "    ", true);
-    }}
+    }
+}
 
 class MemberAccessNode extends ASTNode {
     private List<String> members;
